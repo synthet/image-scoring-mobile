@@ -2,6 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { BinaryScreen } from '@/components/labeling/BinaryScreen';
 import { CullingScreen } from '@/components/labeling/CullingScreen';
+import { PairwiseScreen } from '@/components/labeling/PairwiseScreen';
 import { useLabelSession } from '@/hooks/useLabelSession';
 import type { LabelMode } from '@/types/labeling';
 
@@ -22,7 +23,11 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     );
   }
 
-  if (!session.task || !session.previewUri) {
+  const taskReady =
+    session.task &&
+    (mode === 'pairwise' ? session.pairwise != null : session.previewUri != null);
+
+  if (!taskReady) {
     return (
       <View style={styles.center}>
         <Text style={styles.doneTitle}>Batch complete</Text>
@@ -33,9 +38,10 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     );
   }
 
+  const previewUri = session.previewUri!;
   const screenProps = {
     question,
-    previewUri: session.previewUri,
+    previewUri,
     allowZoom: session.allowZoom,
     allowUndo: session.allowUndo,
     onSkip: () => void session.skipTask(),
@@ -56,6 +62,20 @@ export function LabelEngine({ batchId, mode, question }: Props) {
       <BinaryScreen
         {...screenProps}
         onChoice={(choice) => void session.submitChoice(choice)}
+      />
+    );
+  }
+
+  if (mode === 'pairwise' && session.pairwise) {
+    return (
+      <PairwiseScreen
+        question={question}
+        presentation={session.pairwise}
+        allowZoom={session.allowZoom}
+        allowUndo={session.allowUndo}
+        onDecision={(d) => void session.submitPairwiseChoice(d)}
+        onSkip={() => void session.skipTask()}
+        onUndo={() => void session.undo()}
       />
     );
   }

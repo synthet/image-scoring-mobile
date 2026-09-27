@@ -10,15 +10,22 @@ import {
   saveAnnotation,
   undoLastAnnotation,
 } from '@/db/repository';
-import { resolvePreviewUri } from '@/services/assetCache';
+import { loadPairwisePresentation, loadSinglePreview } from '@/services/taskPreviews';
 import { getOrCreateDeviceId } from '@/services/device';
 import type { AnnotationEvent, LabelTask } from '@/types/labeling';
+import {
+  pairwiseAnswerFromDecision,
+  type PairwiseDecision,
+  type PairwisePresentation,
+} from '@/utils/pairwisePresentation';
 
 export function useLabelSession(batchId: string): {
   task: LabelTask | null;
   previewUri: string | null;
+  pairwise: PairwisePresentation | null;
   loading: boolean;
   submitChoice: (choice: string) => Promise<void>;
+  submitPairwiseChoice: (decision: PairwiseDecision) => Promise<void>;
   skipTask: () => Promise<void>;
   undo: () => Promise<void>;
   allowUndo: boolean;
@@ -28,10 +35,34 @@ export function useLabelSession(batchId: string): {
   const db = useSQLiteContext();
   const [task, setTask] = useState<LabelTask | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [pairwise, setPairwise] = useState<PairwisePresentation | null>(null);
   const [loading, setLoading] = useState(true);
   const [allowUndo, setAllowUndo] = useState(true);
   const [allowZoom, setAllowZoom] = useState(true);
   const taskStartedAt = useRef(Date.now());
+
+  const hydrateTask = useCallback(
+    async (next: LabelTask | null) => {
+      setTask(next);
+      taskStartedAt.current = Date.now();
+
+      if (!next || next.items.length === 0) {
+        setPreviewUri(null);
+        setPairwise(null);
+        return;
+      }
+
+      if (next.mode === 'pairwise') {
+        setPreviewUri(null);
+        setPairwise(await loadPairwisePresentation(db, next));
+        return;
+      }
+
+      setPairwise(null);
+      setPreviewUri(await loadSinglePreview(db, next));
+    },
+    [db],
+  );
 
   const loadNext = useCallback(async () => {
     setLoading(true);
@@ -40,24 +71,9 @@ export function useLabelSession(batchId: string): {
     setAllowZoom(config.allowZoom);
 
     const next = await getNextPendingTask(db, batchId);
-    setTask(next);
-    taskStartedAt.current = Date.now();
-
-    if (!next || next.items.length === 0) {
-      setPreviewUri(null);
-      setLoading(false);
-      return;
-    }
-
-    const remote = next.items[0].assets.preview;
-    try {
-      const local = await resolvePreviewUri(db, remote);
-      setPreviewUri(local);
-    } catch {
-      setPreviewUri(remote);
-    }
+    await hydrateTask(next);
     setLoading(false);
-  }, [batchId, db]);
+  }, [batchId, db, hydrateTask]);
 
   useEffect(() => {
     void loadNext();
@@ -100,6 +116,16 @@ export function useLabelSession(batchId: string): {
     [persistAnnotation],
   );
 
+  const submitPairwiseChoice = useCallback(
+    async (decision: PairwiseDecision) => {
+      if (!pairwise) {
+        return;
+      }
+      await persistAnnotation(pairwiseAnswerFromDecision(decision, pairwise));
+    },
+    [pairwise, persistAnnotation],
+  );
+
   const skipTask = useCallback(async () => {
     await persistAnnotation({ skipped: true });
   }, [persistAnnotation]);
@@ -107,24 +133,17 @@ export function useLabelSession(batchId: string): {
   const undo = useCallback(async () => {
     const restored = await undoLastAnnotation(db, batchId);
     if (restored) {
-      setTask(restored);
-      taskStartedAt.current = Date.now();
-      const remote = restored.items[0]?.assets.preview;
-      if (remote) {
-        try {
-          setPreviewUri(await resolvePreviewUri(db, remote));
-        } catch {
-          setPreviewUri(remote);
-        }
-      }
+      await hydrateTask(restored);
     }
-  }, [batchId, db]);
+  }, [batchId, db, hydrateTask]);
 
   return {
     task,
     previewUri,
+    pairwise,
     loading,
     submitChoice,
+    submitPairwiseChoice,
     skipTask,
     undo,
     allowUndo,

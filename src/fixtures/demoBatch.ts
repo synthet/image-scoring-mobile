@@ -23,7 +23,7 @@ function createDemoBatch(
   question: string,
   choices: string[],
   taskCount: number,
-): Promise<LabelBatch> {
+): LabelBatch {
   const batchId = Crypto.randomUUID();
   const config: TaskConfig = { choices, presentation: PRESENTATION };
 
@@ -81,4 +81,58 @@ export function createDemoBinaryBatch(taskCount = 12): LabelBatch {
     ['GOOD', 'BAD'],
     taskCount,
   );
+}
+
+const DEMO_PAIRS: [number, number][] = [
+  [101, 102],
+  [103, 104],
+  [105, 106],
+  [107, 108],
+  [109, 110],
+  [111, 112],
+  [113, 114],
+  [115, 101],
+];
+
+export function createDemoPairwiseBatch(pairCount = 8): LabelBatch {
+  const batchId = Crypto.randomUUID();
+  const experimentId = 'pairwise-demo-v1';
+  const question = 'Which image is better?';
+  const config: TaskConfig = {
+    choices: ['LEFT', 'RIGHT', 'EQUAL', 'CANNOT_JUDGE'],
+    presentation: PRESENTATION,
+  };
+
+  const tasks: LabelTask[] = DEMO_PAIRS.slice(0, pairCount).map(([seedA, seedB], index) => ({
+    id: Crypto.randomUUID(),
+    batchId,
+    mode: 'pairwise',
+    items: [
+      {
+        imageId: `demo-image-${seedA}`,
+        assets: { preview: previewUrl(seedA) },
+      },
+      {
+        imageId: `demo-image-${seedB}`,
+        assets: { preview: previewUrl(seedB) },
+      },
+    ],
+    question,
+    experimentId,
+    schemaVersion: 1,
+    config,
+    context: {
+      selectionReason: index % 2 === 0 ? 'close-scores' : 'demo',
+    },
+  }));
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'pairwise',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks,
+  };
 }

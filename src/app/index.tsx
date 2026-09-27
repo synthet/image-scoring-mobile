@@ -14,7 +14,11 @@ import {
 import { listRemoteBatches } from '@/api/labelingHubClient';
 import { ProgressHeader } from '@/components/ProgressHeader';
 import { listBatches, type BatchSummary } from '@/db/repository';
-import { createDemoBinaryBatch, createDemoCullingBatch } from '@/fixtures/demoBatch';
+import {
+  createDemoBinaryBatch,
+  createDemoCullingBatch,
+  createDemoPairwiseBatch,
+} from '@/fixtures/demoBatch';
 import { useSyncWorker } from '@/hooks/useSyncWorker';
 import { importBatchLocally, warmBatchAssetCache } from '@/services/batchImport';
 
@@ -51,11 +55,15 @@ export default function HomeScreen() {
   }, [db, reloadLocal]);
 
   const loadDemoBatch = useCallback(
-    async (kind: 'culling' | 'binary') => {
+    async (kind: 'culling' | 'binary' | 'pairwise') => {
       setBusy(`demo-${kind}`);
       try {
         const batch =
-          kind === 'culling' ? await createDemoCullingBatch() : await createDemoBinaryBatch();
+          kind === 'culling'
+            ? createDemoCullingBatch()
+            : kind === 'binary'
+              ? createDemoBinaryBatch()
+              : createDemoPairwiseBatch();
         await importBatchLocally(db, batch);
         await warmBatchAssetCache(db, batch);
         await reloadLocal();
@@ -139,6 +147,17 @@ export default function HomeScreen() {
             <ActivityIndicator color="#4DA3FF" />
           ) : (
             <Text style={styles.secondaryBtnText}>Demo: Good / Bad</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('pairwise')}
+          disabled={busy === 'demo-pairwise'}
+        >
+          {busy === 'demo-pairwise' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: A vs B</Text>
           )}
         </Pressable>
         <Link href="/settings" asChild>

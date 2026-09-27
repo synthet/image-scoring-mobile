@@ -63,6 +63,14 @@ export interface LabelBatch {
   tasks: LabelTask[];
 }
 
+export interface PairwiseAnswerContext {
+  leftImageId: string;
+  rightImageId: string;
+  canonicalImageIds: [string, string];
+  sidesSwapped: boolean;
+  winnerImageId?: string;
+}
+
 export interface AnnotationAnswer {
   choice?: string;
   selectedImageId?: string;
@@ -70,6 +78,8 @@ export interface AnnotationAnswer {
   orderedImageIds?: string[];
   skipped?: boolean;
   cannotJudge?: boolean;
+  /** Present for pairwise tasks — records on-screen layout at submit time. */
+  pairwise?: PairwiseAnswerContext;
 }
 
 export interface AnnotationInteraction {

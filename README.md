@@ -19,7 +19,7 @@ Implemented in this repo:
 
 - Expo Router shell (`src/app/`)
 - SQLite schema (batches, tasks, annotations, outbox, asset cache)
-- Pick / Keep / Reject (`culling`) and Good / Bad (`binary`) labeling UI with undo, skip, and zoom
+- Pick / Keep / Reject (`culling`), Good / Bad (`binary`), and pairwise (`LEFT` / `RIGHT` / `EQUAL` / `CANNOT_JUDGE`) UI with undo, skip, and zoom
 - Background annotation outbox flush
 - Demo batch (Picsum previews) for end-to-end UI testing without a hub
 
@@ -27,7 +27,7 @@ Not yet implemented here (follow-on):
 
 - Hetzner labeling service
 - Local task builder / sync agent in `image-scoring-backend`
-- Pairwise mode (A / B / Equal / Cannot judge)
+- Swipe gestures (optional enhancement on existing modes)
 - Gesture swipes (buttons provided for clarity)
 
 ## Development
