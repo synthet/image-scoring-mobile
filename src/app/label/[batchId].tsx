@@ -7,13 +7,14 @@ import { LabelEngine } from '@/components/labeling/LabelEngine';
 import { ProgressHeader } from '@/components/ProgressHeader';
 import { getBatchProgress, listBatches } from '@/db/repository';
 import { useSyncWorker } from '@/hooks/useSyncWorker';
+import type { LabelMode } from '@/types/labeling';
 
 export default function LabelBatchScreen() {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
   const db = useSQLiteContext();
   const { pendingCount, syncNow } = useSyncWorker();
   const [meta, setMeta] = useState<{
-    mode: string;
+    mode: LabelMode;
     question: string;
     total: number;
     completed: number;
@@ -29,7 +30,7 @@ export default function LabelBatchScreen() {
       const progress = await getBatchProgress(db, batchId);
       if (batch) {
         setMeta({
-          mode: batch.mode,
+          mode: batch.mode as LabelMode,
           question: batch.question,
           total: progress.total,
           completed: progress.completed,
@@ -58,7 +59,7 @@ export default function LabelBatchScreen() {
   return (
     <View style={styles.root}>
       <ProgressHeader completed={meta.completed} total={meta.total} pendingSync={pendingCount} />
-      <LabelEngine batchId={batchId} mode={meta.mode as 'culling'} question={meta.question} />
+      <LabelEngine batchId={batchId} mode={meta.mode} question={meta.question} />
     </View>
   );
 }

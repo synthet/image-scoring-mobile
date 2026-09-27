@@ -1,5 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { BinaryScreen } from '@/components/labeling/BinaryScreen';
 import { CullingScreen } from '@/components/labeling/CullingScreen';
 import { useLabelSession } from '@/hooks/useLabelSession';
 import type { LabelMode } from '@/types/labeling';
@@ -32,16 +33,29 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     );
   }
 
+  const screenProps = {
+    question,
+    previewUri: session.previewUri,
+    allowZoom: session.allowZoom,
+    allowUndo: session.allowUndo,
+    onSkip: () => void session.skipTask(),
+    onUndo: () => void session.undo(),
+  };
+
   if (mode === 'culling') {
     return (
       <CullingScreen
-        question={question}
-        previewUri={session.previewUri}
-        allowZoom={session.allowZoom}
-        allowUndo={session.allowUndo}
+        {...screenProps}
         onChoice={(choice) => void session.submitChoice(choice)}
-        onSkip={() => void session.skipTask()}
-        onUndo={() => void session.undo()}
+      />
+    );
+  }
+
+  if (mode === 'binary') {
+    return (
+      <BinaryScreen
+        {...screenProps}
+        onChoice={(choice) => void session.submitChoice(choice)}
       />
     );
   }

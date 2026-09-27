@@ -8,13 +8,13 @@ type Props = {
   question: string;
   previewUri: string;
   allowZoom?: boolean;
-  onChoice: (choice: 'PICK' | 'KEEP' | 'REJECT') => void;
+  onChoice: (choice: 'GOOD' | 'BAD') => void;
   onSkip: () => void;
   onUndo?: () => void;
   allowUndo?: boolean;
 };
 
-export function CullingScreen({
+export function BinaryScreen({
   question,
   previewUri,
   allowZoom,
@@ -28,15 +28,11 @@ export function CullingScreen({
       <Text style={styles.question}>{question}</Text>
       <ZoomablePreview uri={previewUri} allowZoom={allowZoom} />
 
-      <View style={styles.gestureHint}>
-        <Text style={styles.hintText}>REJECT ◄   ► KEEP</Text>
-        <Text style={styles.hintPick}>▲ PICK</Text>
-      </View>
+      <Text style={styles.hint}>◄ BAD · GOOD ►</Text>
 
       <View style={styles.actions}>
-        <LabelChoiceButton label="Reject" tone="reject" onPress={() => onChoice('REJECT')} />
-        <LabelChoiceButton label="Keep" tone="keep" onPress={() => onChoice('KEEP')} />
-        <LabelChoiceButton label="Pick" tone="pick" onPress={() => onChoice('PICK')} />
+        <LabelChoiceButton label="Bad" tone="bad" onPress={() => onChoice('BAD')} />
+        <LabelChoiceButton label="Good" tone="good" onPress={() => onChoice('GOOD')} />
       </View>
 
       <LabelSecondaryActions onSkip={onSkip} onUndo={onUndo} allowUndo={allowUndo} />
@@ -57,23 +53,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 4,
   },
-  gestureHint: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  hintText: {
+  hint: {
+    textAlign: 'center',
     color: '#7E92A8',
     fontSize: 12,
     letterSpacing: 0.5,
   },
-  hintPick: {
-    color: '#6BCB8E',
-    fontSize: 12,
-    fontWeight: '600',
-  },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingHorizontal: 12,
     gap: 8,
   },

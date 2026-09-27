@@ -14,7 +14,7 @@ import {
 import { listRemoteBatches } from '@/api/labelingHubClient';
 import { ProgressHeader } from '@/components/ProgressHeader';
 import { listBatches, type BatchSummary } from '@/db/repository';
-import { createDemoCullingBatch } from '@/fixtures/demoBatch';
+import { createDemoBinaryBatch, createDemoCullingBatch } from '@/fixtures/demoBatch';
 import { useSyncWorker } from '@/hooks/useSyncWorker';
 import { importBatchLocally, warmBatchAssetCache } from '@/services/batchImport';
 
@@ -50,18 +50,22 @@ export default function HomeScreen() {
     }
   }, [db, reloadLocal]);
 
-  const loadDemoBatch = useCallback(async () => {
-    setBusy('demo');
-    try {
-      const batch = await createDemoCullingBatch();
-      await importBatchLocally(db, batch);
-      await warmBatchAssetCache(db, batch);
-      await reloadLocal();
-      router.push(`/label/${batch.id}`);
-    } finally {
-      setBusy(null);
-    }
-  }, [db, reloadLocal]);
+  const loadDemoBatch = useCallback(
+    async (kind: 'culling' | 'binary') => {
+      setBusy(`demo-${kind}`);
+      try {
+        const batch =
+          kind === 'culling' ? await createDemoCullingBatch() : await createDemoBinaryBatch();
+        await importBatchLocally(db, batch);
+        await warmBatchAssetCache(db, batch);
+        await reloadLocal();
+        router.push(`/label/${batch.id}`);
+      } finally {
+        setBusy(null);
+      }
+    },
+    [db, reloadLocal],
+  );
 
   const openBatch = useCallback(
     async (batchId: string) => {
@@ -115,11 +119,26 @@ export default function HomeScreen() {
       />
 
       <View style={styles.footer}>
-        <Pressable style={styles.primaryBtn} onPress={() => void loadDemoBatch()} disabled={busy === 'demo'}>
-          {busy === 'demo' ? (
+        <Pressable
+          style={styles.primaryBtn}
+          onPress={() => void loadDemoBatch('culling')}
+          disabled={busy === 'demo-culling'}
+        >
+          {busy === 'demo-culling' ? (
             <ActivityIndicator color="#0B0F14" />
           ) : (
-            <Text style={styles.primaryBtnText}>Load demo culling batch</Text>
+            <Text style={styles.primaryBtnText}>Demo: Pick / Keep / Reject</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('binary')}
+          disabled={busy === 'demo-binary'}
+        >
+          {busy === 'demo-binary' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: Good / Bad</Text>
           )}
         </Pressable>
         <Link href="/settings" asChild>
@@ -191,6 +210,18 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: '#0B0F14',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  secondaryBtn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#243040',
+  },
+  secondaryBtnText: {
+    color: '#C5D3E0',
     fontWeight: '700',
     fontSize: 15,
   },
