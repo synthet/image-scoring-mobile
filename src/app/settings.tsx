@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { DEFAULT_API_BASE_URL } from '@/config/env';
+import { DEFAULT_API_BASE_URL, DEV_MOBILE_TOKEN } from '@/config/env';
 import { getAccessToken, getApiBaseUrl, setAccessToken, setApiBaseUrl } from '@/services/device';
 import { pingHub } from '@/api/labelingHubClient';
 
@@ -64,8 +64,9 @@ export default function SettingsScreen() {
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
       <Text style={styles.note}>
-        Shared REST paths and payload schemas are owned by image-scoring-backend. This app implements
-        the provisional mobile consumer contract in docs/LABELING_API.md.
+        Dev hub: run `npm run hub:dev` from the repo root, then use token `{DEV_MOBILE_TOKEN}`.
+        Shared REST paths and payload schemas are owned by image-scoring-backend — see
+        docs/LABELING_API.md.
       </Text>
     </View>
   );

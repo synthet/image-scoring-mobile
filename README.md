@@ -23,9 +23,19 @@ Implemented in this repo:
 - Background annotation outbox flush
 - Demo batch (Picsum previews) for end-to-end UI testing without a hub
 
-Not yet implemented here (follow-on):
+### Labeling hub (step 4)
 
-- Hetzner labeling service
+Minimal broker in [`labeling-hub/`](./labeling-hub/README.md) — SQLite, mobile + machine tokens, seed batch on first run.
+
+```bash
+npm run hub:dev
+```
+
+Point the app Settings to `http://localhost:8787` with token `dev-mobile-token`, then pull to refresh.
+
+Not yet implemented (follow-on):
+
+- Production Hetzner deploy (PostgreSQL + object storage)
 - Local task builder / sync agent in `image-scoring-backend`
 - Swipe gestures (optional enhancement on existing modes)
 - Gesture swipes (buttons provided for clarity)

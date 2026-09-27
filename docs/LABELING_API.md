@@ -13,6 +13,15 @@ Until those sources publish labeling endpoints, this app uses the provisional ro
 | `POST` | `/v1/batches/{batchId}/lease` | Lease up to `limit` tasks (`LeaseResponse`) |
 | `POST` | `/v1/annotations` | Idempotent upload of `{ annotations: AnnotationEvent[] }` |
 
+### Machine (local sync agent) routes
+
+Implemented in [`labeling-hub/`](../labeling-hub/README.md) for development:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/v1/machine/batches` | Upsert batch manifest + tasks (machine token) |
+| `GET` | `/v1/machine/annotations?since=` | Incremental annotation export for import into Vexlum |
+
 ## Payload alignment
 
 Types in `src/types/labeling.ts` mirror the architecture document:

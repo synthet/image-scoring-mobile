@@ -8,7 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "hub:dev": "npm run dev --prefix labeling-hub",
+    "hub:typecheck": "npm run typecheck --prefix labeling-hub"
   },
   "dependencies": {
     "babel-preset-expo": "~57.0.0",
