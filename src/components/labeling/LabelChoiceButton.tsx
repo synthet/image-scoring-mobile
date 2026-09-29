@@ -6,7 +6,9 @@ export type LabelChoiceTone =
   | 'reject'
   | 'good'
   | 'bad'
-  | 'neutral';
+  | 'neutral'
+  | 'warning'
+  | 'crop';
 
 type Props = {
   label: string;
@@ -75,5 +77,11 @@ const styles = StyleSheet.create({
   },
   tone_neutral: {
     backgroundColor: '#243040',
+  },
+  tone_warning: {
+    backgroundColor: '#8A6A1A',
+  },
+  tone_crop: {
+    backgroundColor: '#9A6B2E',
   },
 });

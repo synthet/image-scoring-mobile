@@ -2,6 +2,8 @@
 
 export type LabelMode =
   | 'binary'
+  | 'presence'
+  | 'box_quality'
   | 'culling'
   | 'pairwise'
   | 'best_of_n'
@@ -12,6 +14,8 @@ export type LabelMode =
 export interface LabelAssets {
   preview: string;
   thumbnail?: string;
+  subject_crop?: string;
+  eye_crop?: string;
 }
 
 export interface LabelItem {
@@ -33,6 +37,11 @@ export interface LabelTask {
   experimentId: string;
   schemaVersion: number;
   config: TaskConfig;
+  context?: {
+    clusterId?: string;
+    compareVariant?: 'model_compare';
+    selectionReason?: string;
+  };
 }
 
 export interface LabelBatch {

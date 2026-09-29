@@ -40,7 +40,9 @@ export function useSyncWorker(enabled = true): {
     if (!enabled) {
       return;
     }
-    void refreshPending();
+    queueMicrotask(() => {
+      void refreshPending();
+    });
     const interval = setInterval(() => {
       void syncNow();
     }, SYNC_INTERVAL_MS);

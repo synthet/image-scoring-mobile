@@ -1,4 +1,15 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# AI Agents — image-scoring-mobile
+
+This is an Expo/React Native mobile application for Vexlum human labeling. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+
+## Ecosystem context
+
+This repository is part of the **Image Scoring** sibling fleet:
+- **Umbrella hub:** `../image-scoring` (`repos.manifest.json`, `image-scoring.code-workspace`)
+- **Backend authority:** `../image-scoring-backend` (or `../image-scoring-pipeline`) — owns canonical schemas, REST contracts, and database authority
+- **Desktop client:** `../image-scoring-gallery`
+- **Design tokens:** `../image-scoring-ui`
+
 
 ## Expo has changed — do not trust your training data
 

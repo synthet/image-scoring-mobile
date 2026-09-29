@@ -16,8 +16,11 @@ import { ProgressHeader } from '@/components/ProgressHeader';
 import { listBatches, type BatchSummary } from '@/db/repository';
 import {
   createDemoBinaryBatch,
+  createDemoBoxQualityBatch,
   createDemoCullingBatch,
+  createDemoModelCompareBatch,
   createDemoPairwiseBatch,
+  createDemoPresenceBatch,
 } from '@/fixtures/demoBatch';
 import { useSyncWorker } from '@/hooks/useSyncWorker';
 import { importBatchLocally, warmBatchAssetCache } from '@/services/batchImport';
@@ -35,7 +38,9 @@ export default function HomeScreen() {
   }, [db]);
 
   useEffect(() => {
-    void reloadLocal();
+    queueMicrotask(() => {
+      void reloadLocal();
+    });
   }, [reloadLocal]);
 
   const refreshFromHub = useCallback(async () => {
@@ -55,7 +60,15 @@ export default function HomeScreen() {
   }, [db, reloadLocal]);
 
   const loadDemoBatch = useCallback(
-    async (kind: 'culling' | 'binary' | 'pairwise') => {
+    async (
+      kind:
+        | 'culling'
+        | 'binary'
+        | 'pairwise'
+        | 'box_quality'
+        | 'presence'
+        | 'model_compare',
+    ) => {
       setBusy(`demo-${kind}`);
       try {
         const batch =
@@ -63,7 +76,13 @@ export default function HomeScreen() {
             ? createDemoCullingBatch()
             : kind === 'binary'
               ? createDemoBinaryBatch()
-              : createDemoPairwiseBatch();
+              : kind === 'box_quality'
+                ? createDemoBoxQualityBatch()
+                : kind === 'presence'
+                  ? createDemoPresenceBatch()
+                  : kind === 'model_compare'
+                    ? createDemoModelCompareBatch()
+                    : createDemoPairwiseBatch();
         await importBatchLocally(db, batch);
         await warmBatchAssetCache(db, batch);
         await reloadLocal();
@@ -158,6 +177,39 @@ export default function HomeScreen() {
             <ActivityIndicator color="#4DA3FF" />
           ) : (
             <Text style={styles.secondaryBtnText}>Demo: A vs B</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('box_quality')}
+          disabled={busy === 'demo-box_quality'}
+        >
+          {busy === 'demo-box_quality' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: Box quality</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('presence')}
+          disabled={busy === 'demo-presence'}
+        >
+          {busy === 'demo-presence' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: Presence</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('model_compare')}
+          disabled={busy === 'demo-model_compare'}
+        >
+          {busy === 'demo-model_compare' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: Detector compare</Text>
           )}
         </Pressable>
         <Link href="/settings" asChild>

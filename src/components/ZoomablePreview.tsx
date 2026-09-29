@@ -10,13 +10,34 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import type { BoundingBox } from '@/types/labeling';
+
 type Props = {
   uri: string;
   allowZoom?: boolean;
   onZoomUsed?: () => void;
+  /** Normalized detector box drawn over the inline preview (best-effort with letterboxing). */
+  detectorBox?: BoundingBox;
 };
 
-export function ZoomablePreview({ uri, allowZoom = true, onZoomUsed }: Props) {
+function DetectorBoxOverlay({ box }: { box: BoundingBox }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.detectorBox,
+        {
+          left: `${box.x * 100}%`,
+          top: `${box.y * 100}%`,
+          width: `${box.width * 100}%`,
+          height: `${box.height * 100}%`,
+        },
+      ]}
+    />
+  );
+}
+
+export function ZoomablePreview({ uri, allowZoom = true, onZoomUsed, detectorBox }: Props) {
   const { width, height } = useWindowDimensions();
   const [zoomOpen, setZoomOpen] = useState(false);
 
@@ -32,6 +53,7 @@ export function ZoomablePreview({ uri, allowZoom = true, onZoomUsed }: Props) {
     <>
       <Pressable style={styles.frame} onPress={openZoom} accessibilityRole="imagebutton">
         <Image source={{ uri }} style={styles.image} contentFit="contain" transition={200} />
+        {detectorBox ? <DetectorBoxOverlay box={detectorBox} /> : null}
         {allowZoom ? <Text style={styles.hint}>Tap to zoom</Text> : null}
       </Pressable>
 
@@ -43,11 +65,16 @@ export function ZoomablePreview({ uri, allowZoom = true, onZoomUsed }: Props) {
             centerContent
             contentContainerStyle={{ minHeight: height, minWidth: width }}
           >
-            <Image
-              source={{ uri }}
-              style={{ width, height: height * 0.85 }}
-              contentFit="contain"
-            />
+            <View style={{ width, height: height * 0.85 }}>
+              <Image
+                source={{ uri }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="contain"
+              />
+              {detectorBox ? (
+                <DetectorBoxOverlay box={detectorBox} />
+              ) : null}
+            </View>
           </ScrollView>
           <Pressable style={styles.close} onPress={() => setZoomOpen(false)}>
             <Text style={styles.closeText}>Close</Text>
@@ -59,6 +86,12 @@ export function ZoomablePreview({ uri, allowZoom = true, onZoomUsed }: Props) {
 }
 
 const styles = StyleSheet.create({
+  detectorBox: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: '#E36B24',
+    borderRadius: 2,
+  },
   frame: {
     flex: 1,
     marginHorizontal: 12,

@@ -22,7 +22,14 @@ export async function warmBatchAssetCache(
   onProgress?: (done: number, total: number) => void,
 ): Promise<void> {
   const urls = batch.tasks.flatMap((t) =>
-    t.items.flatMap((item) => [item.assets.preview, item.assets.thumbnail].filter(Boolean) as string[]),
+    t.items.flatMap((item) =>
+      [
+        item.assets.preview,
+        item.assets.thumbnail,
+        item.assets.subject_crop,
+        item.assets.eye_crop,
+      ].filter(Boolean) as string[],
+    ),
   );
   const unique = [...new Set(urls)];
   let done = 0;

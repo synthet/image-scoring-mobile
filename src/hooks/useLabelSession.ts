@@ -10,7 +10,12 @@ import {
   saveAnnotation,
   undoLastAnnotation,
 } from '@/db/repository';
-import { loadPairwisePresentation, loadSinglePreview } from '@/services/taskPreviews';
+import {
+  loadBoxQualityPresentation,
+  loadPairwisePresentation,
+  loadSinglePreview,
+  type BoxQualityPresentation,
+} from '@/services/taskPreviews';
 import { getOrCreateDeviceId } from '@/services/device';
 import type { AnnotationEvent, LabelTask } from '@/types/labeling';
 import {
@@ -22,43 +27,64 @@ import {
 export function useLabelSession(batchId: string): {
   task: LabelTask | null;
   previewUri: string | null;
+  boxQuality: BoxQualityPresentation | null;
   pairwise: PairwisePresentation | null;
   loading: boolean;
-  submitChoice: (choice: string) => Promise<void>;
+  submitChoice: (choice: string, options?: { isBest?: boolean }) => Promise<void>;
   submitPairwiseChoice: (decision: PairwiseDecision) => Promise<void>;
   skipTask: () => Promise<void>;
   undo: () => Promise<void>;
   allowUndo: boolean;
   allowZoom: boolean;
-  taskStartedAt: number;
+  recordZoomUsed: () => void;
 } {
   const db = useSQLiteContext();
   const [task, setTask] = useState<LabelTask | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [boxQuality, setBoxQuality] = useState<BoxQualityPresentation | null>(null);
   const [pairwise, setPairwise] = useState<PairwisePresentation | null>(null);
   const [loading, setLoading] = useState(true);
   const [allowUndo, setAllowUndo] = useState(true);
   const [allowZoom, setAllowZoom] = useState(true);
-  const taskStartedAt = useRef(Date.now());
+  const taskStartedAt = useRef(0);
+  const zoomUsedRef = useRef(false);
+  const zoomCountRef = useRef(0);
+
+  const recordZoomUsed = useCallback(() => {
+    zoomUsedRef.current = true;
+    zoomCountRef.current += 1;
+  }, []);
 
   const hydrateTask = useCallback(
     async (next: LabelTask | null) => {
       setTask(next);
       taskStartedAt.current = Date.now();
+      zoomUsedRef.current = false;
+      zoomCountRef.current = 0;
 
       if (!next || next.items.length === 0) {
         setPreviewUri(null);
+        setBoxQuality(null);
         setPairwise(null);
         return;
       }
 
       if (next.mode === 'pairwise') {
         setPreviewUri(null);
+        setBoxQuality(null);
         setPairwise(await loadPairwisePresentation(db, next));
         return;
       }
 
+      if (next.mode === 'box_quality') {
+        setPairwise(null);
+        setPreviewUri(null);
+        setBoxQuality(await loadBoxQualityPresentation(db, next));
+        return;
+      }
+
       setPairwise(null);
+      setBoxQuality(null);
       setPreviewUri(await loadSinglePreview(db, next));
     },
     [db],
@@ -76,7 +102,9 @@ export function useLabelSession(batchId: string): {
   }, [batchId, db, hydrateTask]);
 
   useEffect(() => {
-    void loadNext();
+    queueMicrotask(() => {
+      void loadNext();
+    });
   }, [loadNext]);
 
   const persistAnnotation = useCallback(
@@ -85,6 +113,7 @@ export function useLabelSession(batchId: string): {
         return;
       }
       const deviceId = await getOrCreateDeviceId();
+      const startedAt = taskStartedAt.current > 0 ? taskStartedAt.current : Date.now();
       const event: AnnotationEvent = {
         annotationId: Crypto.randomUUID(),
         taskId: task.id,
@@ -96,8 +125,9 @@ export function useLabelSession(batchId: string): {
           appVersion: APP_VERSION,
         },
         interaction: {
-          durationMs: Date.now() - taskStartedAt.current,
-          zoomUsed: false,
+          durationMs: Date.now() - startedAt,
+          zoomUsed: zoomUsedRef.current,
+          zoomCount: zoomCountRef.current > 0 ? zoomCountRef.current : undefined,
         },
         createdAt: new Date().toISOString(),
       };
@@ -110,8 +140,11 @@ export function useLabelSession(batchId: string): {
   );
 
   const submitChoice = useCallback(
-    async (choice: string) => {
-      await persistAnnotation({ choice });
+    async (choice: string, options?: { isBest?: boolean }) => {
+      await persistAnnotation({
+        choice,
+        ...(options?.isBest ? { isBest: true } : {}),
+      });
     },
     [persistAnnotation],
   );
@@ -140,6 +173,7 @@ export function useLabelSession(batchId: string): {
   return {
     task,
     previewUri,
+    boxQuality,
     pairwise,
     loading,
     submitChoice,
@@ -148,6 +182,6 @@ export function useLabelSession(batchId: string): {
     undo,
     allowUndo,
     allowZoom,
-    taskStartedAt: taskStartedAt.current,
+    recordZoomUsed,
   };
 }

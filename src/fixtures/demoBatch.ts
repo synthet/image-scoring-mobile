@@ -64,13 +64,30 @@ function createDemoBatch(
 }
 
 export function createDemoCullingBatch(taskCount = 12): LabelBatch {
-  return createDemoBatch(
+  const batch = createDemoBatch(
     'culling',
     'culling-demo-v1',
     'What should happen to this image?',
     ['PICK', 'KEEP', 'REJECT'],
     taskCount,
   );
+  batch.tasks = batch.tasks.map((task, index) => {
+    const inBurstDemo = index < 8;
+    return {
+      ...task,
+      context: {
+        ...task.context,
+        ...(inBurstDemo
+          ? {
+              clusterId: `burst-demo-${Math.floor(index / 4)}`,
+              burstIndex: index % 4,
+              burstSize: 4,
+            }
+          : {}),
+      },
+    };
+  });
+  return batch;
 }
 
 export function createDemoBinaryBatch(taskCount = 12): LabelBatch {
@@ -93,6 +110,114 @@ const DEMO_PAIRS: [number, number][] = [
   [113, 114],
   [115, 101],
 ];
+
+export function createDemoBoxQualityBatch(taskCount = 10): LabelBatch {
+  const batchId = Crypto.randomUUID();
+  const experimentId = 'box-quality-demo-v1';
+  const question = 'Is the primary detection box acceptable?';
+  const config: TaskConfig = {
+    choices: ['USABLE', 'POOR_CROP', 'WRONG_TARGET', 'UNSURE'],
+    presentation: PRESENTATION,
+  };
+
+  const tasks: LabelTask[] = DEMO_SEEDS.slice(0, taskCount).map((seed, index) => ({
+    id: Crypto.randomUUID(),
+    batchId,
+    mode: 'box_quality',
+    items: [
+      {
+        imageId: `demo-image-${seed}`,
+        assets: {
+          preview: previewUrl(seed),
+          subject_crop: `https://picsum.photos/seed/vexlum-crop-${seed}/900/900`,
+        },
+        metadata: {
+          primaryBox: {
+            x: 0.22 + (index % 3) * 0.05,
+            y: 0.18 + (index % 2) * 0.08,
+            width: 0.38,
+            height: 0.42,
+          },
+        },
+      },
+    ],
+    question,
+    experimentId,
+    schemaVersion: 1,
+    config,
+    context: {
+      selectionReason: index % 2 === 0 ? 'detector-qa' : 'demo',
+    },
+  }));
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'box_quality',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks,
+  };
+}
+
+export function createDemoPresenceBatch(taskCount = 12): LabelBatch {
+  return createDemoBatch(
+    'presence',
+    'presence-demo-v1',
+    'Is the subject present in this image?',
+    ['PRESENT', 'ABSENT', 'UNSURE'],
+    taskCount,
+  );
+}
+
+export function createDemoModelCompareBatch(pairCount = 8): LabelBatch {
+  const batchId = Crypto.randomUUID();
+  const experimentId = 'detector-compare-demo-v1';
+  const question = 'Which detector crop is better on this photo?';
+  const config: TaskConfig = {
+    choices: ['LEFT', 'RIGHT', 'EQUAL', 'NEITHER', 'CANNOT_JUDGE'],
+    presentation: PRESENTATION,
+  };
+
+  const tasks: LabelTask[] = DEMO_PAIRS.slice(0, pairCount).map(([seedA, seedB], index) => ({
+    id: Crypto.randomUUID(),
+    batchId,
+    mode: 'pairwise',
+    items: [
+      {
+        imageId: `demo-image-${seedA}-model-a`,
+        assets: {
+          preview: `https://picsum.photos/seed/vexlum-a-${seedA}/1200/900`,
+        },
+      },
+      {
+        imageId: `demo-image-${seedB}-model-b`,
+        assets: {
+          preview: `https://picsum.photos/seed/vexlum-b-${seedB}/1200/900`,
+        },
+      },
+    ],
+    question,
+    experimentId,
+    schemaVersion: 1,
+    config,
+    context: {
+      compareVariant: 'model_compare',
+      selectionReason: index % 2 === 0 ? 'v0-vs-v1' : 'demo',
+    },
+  }));
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'pairwise',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks,
+  };
+}
 
 export function createDemoPairwiseBatch(pairCount = 8): LabelBatch {
   const batchId = Crypto.randomUUID();

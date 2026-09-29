@@ -8,6 +8,7 @@ type Props = {
   question: string;
   previewUri: string;
   allowZoom?: boolean;
+  onZoomUsed?: () => void;
   onChoice: (choice: 'GOOD' | 'BAD') => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -18,6 +19,7 @@ export function BinaryScreen({
   question,
   previewUri,
   allowZoom,
+  onZoomUsed,
   onChoice,
   onSkip,
   onUndo,
@@ -26,7 +28,7 @@ export function BinaryScreen({
   return (
     <View style={styles.root}>
       <Text style={styles.question}>{question}</Text>
-      <ZoomablePreview uri={previewUri} allowZoom={allowZoom} />
+      <ZoomablePreview uri={previewUri} allowZoom={allowZoom} onZoomUsed={onZoomUsed} />
 
       <Text style={styles.hint}>◄ BAD · GOOD ►</Text>
 

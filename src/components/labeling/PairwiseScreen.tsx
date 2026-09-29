@@ -9,6 +9,7 @@ type Props = {
   question: string;
   presentation: PairwisePresentation;
   allowZoom?: boolean;
+  onZoomUsed?: () => void;
   onDecision: (decision: PairwiseDecision) => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -19,35 +20,62 @@ export function PairwiseScreen({
   question,
   presentation,
   allowZoom,
+  onZoomUsed,
   onDecision,
   onSkip,
   onUndo,
   allowUndo,
 }: Props) {
+  const isModelCompare = presentation.compareVariant === 'model_compare';
+  const leftLabel = presentation.leftLabel ?? 'Left';
+  const rightLabel = presentation.rightLabel ?? 'Right';
+  const preferLeftLabel = isModelCompare ? 'Prefer A' : 'Left';
+  const preferRightLabel = isModelCompare ? 'Prefer B' : 'Right';
+
   return (
     <View style={styles.root}>
       <Text style={styles.question}>{question}</Text>
 
       <View style={styles.compareRow}>
         <View style={styles.panel}>
-          <Text style={styles.panelLabel}>Left</Text>
-          <ZoomablePreview uri={presentation.left.previewUri} allowZoom={allowZoom} />
+          <Text style={[styles.panelLabel, isModelCompare && styles.panelLabelA]}>{leftLabel}</Text>
+          <ZoomablePreview
+            uri={presentation.left.previewUri}
+            allowZoom={allowZoom}
+            onZoomUsed={onZoomUsed}
+          />
         </View>
         <View style={styles.panel}>
-          <Text style={styles.panelLabel}>Right</Text>
-          <ZoomablePreview uri={presentation.right.previewUri} allowZoom={allowZoom} />
+          <Text style={[styles.panelLabel, isModelCompare && styles.panelLabelB]}>{rightLabel}</Text>
+          <ZoomablePreview
+            uri={presentation.right.previewUri}
+            allowZoom={allowZoom}
+            onZoomUsed={onZoomUsed}
+          />
         </View>
       </View>
 
       <View style={styles.primaryActions}>
-        <LabelChoiceButton label="Left" tone="keep" onPress={() => onDecision('LEFT')} />
-        <LabelChoiceButton label="Equal" tone="neutral" onPress={() => onDecision('EQUAL')} />
-        <LabelChoiceButton label="Right" tone="keep" onPress={() => onDecision('RIGHT')} />
+        <LabelChoiceButton label={preferLeftLabel} tone="keep" onPress={() => onDecision('LEFT')} />
+        <LabelChoiceButton label="Tie" tone="neutral" onPress={() => onDecision('EQUAL')} />
+        <LabelChoiceButton
+          label={preferRightLabel}
+          tone={isModelCompare ? 'crop' : 'keep'}
+          onPress={() => onDecision('RIGHT')}
+        />
       </View>
 
-      <View style={styles.cannotJudgeWrap}>
+      <View style={styles.secondaryActions}>
+        {isModelCompare ? (
+          <LabelChoiceButton
+            label="Neither"
+            tone="bad"
+            flex={false}
+            onPress={() => onDecision('NEITHER')}
+          />
+        ) : null}
         <LabelChoiceButton
-          label="Cannot judge"
+          label={isModelCompare ? 'Unsure' : 'Cannot judge'}
           tone="neutral"
           flex={false}
           onPress={() => onDecision('CANNOT_JUDGE')}
@@ -89,12 +117,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
   },
+  panelLabelA: {
+    color: '#7FB1FF',
+  },
+  panelLabelB: {
+    color: '#FFB46C',
+  },
   primaryActions: {
     flexDirection: 'row',
     paddingHorizontal: 12,
     gap: 8,
   },
-  cannotJudgeWrap: {
-    alignItems: 'center',
+  secondaryActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
 });

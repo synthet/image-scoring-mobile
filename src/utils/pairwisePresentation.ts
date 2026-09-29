@@ -7,11 +7,16 @@ export type PairwiseSideSlot = {
   previewUri: string;
 };
 
+export type PairwiseCompareVariant = 'default' | 'model_compare';
+
 export type PairwisePresentation = {
   left: PairwiseSideSlot;
   right: PairwiseSideSlot;
   sidesSwapped: boolean;
   canonicalImageIds: [string, string];
+  compareVariant?: PairwiseCompareVariant;
+  leftLabel?: string;
+  rightLabel?: string;
 };
 
 /** Deterministic left/right swap from task id (stable across reloads for the same task). */
@@ -25,6 +30,11 @@ export function buildPairwisePresentation(
   leftUri: string,
   rightUri: string,
   sidesSwapped: boolean,
+  options?: {
+    compareVariant?: PairwiseCompareVariant;
+    leftLabel?: string;
+    rightLabel?: string;
+  },
 ): PairwisePresentation {
   const canonicalImageIds: [string, string] = [items[0].imageId, items[1].imageId];
   const leftItem = sidesSwapped ? items[1] : items[0];
@@ -34,10 +44,13 @@ export function buildPairwisePresentation(
     right: { imageId: rightItem.imageId, previewUri: rightUri },
     sidesSwapped,
     canonicalImageIds,
+    compareVariant: options?.compareVariant,
+    leftLabel: options?.leftLabel,
+    rightLabel: options?.rightLabel,
   };
 }
 
-export type PairwiseDecision = 'LEFT' | 'RIGHT' | 'EQUAL' | 'CANNOT_JUDGE';
+export type PairwiseDecision = 'LEFT' | 'RIGHT' | 'EQUAL' | 'NEITHER' | 'CANNOT_JUDGE';
 
 export function pairwiseAnswerFromDecision(
   decision: PairwiseDecision,
@@ -58,6 +71,17 @@ export function pairwiseAnswerFromDecision(
   if (decision === 'EQUAL') {
     return {
       choice: 'EQUAL',
+      pairwise: {
+        leftImageId: presentation.left.imageId,
+        rightImageId: presentation.right.imageId,
+        canonicalImageIds: presentation.canonicalImageIds,
+        sidesSwapped: presentation.sidesSwapped,
+      },
+    };
+  }
+  if (decision === 'NEITHER') {
+    return {
+      choice: 'NEITHER',
       pairwise: {
         leftImageId: presentation.left.imageId,
         rightImageId: presentation.right.imageId,

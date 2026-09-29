@@ -1,11 +1,17 @@
 export type LabelMode =
   | 'binary'
+  | 'presence'
+  | 'box_quality'
   | 'culling'
   | 'pairwise'
   | 'best_of_n'
   | 'rating'
   | 'attribute'
   | 'ranking';
+
+export type BoxQualityChoice = 'USABLE' | 'POOR_CROP' | 'WRONG_TARGET' | 'UNSURE';
+
+export type PresenceChoice = 'PRESENT' | 'ABSENT' | 'UNSURE';
 
 export type TaskStatus = 'pending' | 'completed' | 'skipped';
 
@@ -17,6 +23,16 @@ export interface LabelAssets {
   large?: string;
   subject_crop?: string;
   eye_crop?: string;
+}
+
+/** Normalized (0–1) box coordinates relative to the preview image. */
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence?: number;
+  label?: string;
 }
 
 export interface LabelItem {
@@ -48,7 +64,10 @@ export interface LabelTask {
   context?: {
     clusterId?: string;
     stackId?: string;
+    burstIndex?: number;
+    burstSize?: number;
     selectionReason?: string;
+    compareVariant?: 'model_compare';
   };
   config: TaskConfig;
 }
@@ -78,6 +97,8 @@ export interface AnnotationAnswer {
   orderedImageIds?: string[];
   skipped?: boolean;
   cannotJudge?: boolean;
+  /** Burst culling: reviewer marked this frame as best-in-burst. */
+  isBest?: boolean;
   /** Present for pairwise tasks — records on-screen layout at submit time. */
   pairwise?: PairwiseAnswerContext;
 }

@@ -1,7 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { resolvePreviewUri } from '@/services/assetCache';
-import type { LabelTask } from '@/types/labeling';
+import type { BoundingBox, LabelTask } from '@/types/labeling';
+import { parsePrimaryDetectorBox } from '@/utils/detectorBox';
 import {
   buildPairwisePresentation,
   shouldSwapPairwiseSides,
@@ -27,6 +28,43 @@ export async function loadSinglePreview(
   return resolveAssetUri(db, remote);
 }
 
+export type BoxQualityPresentation = {
+  previewUri: string;
+  subjectCropUri: string;
+  detectorBox?: BoundingBox;
+};
+
+export async function loadBoxQualityPresentation(
+  db: SQLiteDatabase,
+  task: LabelTask,
+): Promise<BoxQualityPresentation | null> {
+  const item = task.items[0];
+  const previewRemote = item?.assets.preview;
+  const cropRemote = item?.assets.subject_crop ?? item?.assets.preview;
+  if (!previewRemote) {
+    return null;
+  }
+  const [previewUri, subjectCropUri] = await Promise.all([
+    resolveAssetUri(db, previewRemote),
+    resolveAssetUri(db, cropRemote),
+  ]);
+  const detectorBox = parsePrimaryDetectorBox(item?.metadata);
+  return { previewUri, subjectCropUri, detectorBox };
+}
+
+function pairwisePresentationOptions(task: LabelTask) {
+  const isModelCompare =
+    task.context?.compareVariant === 'model_compare' || task.config.choices.includes('NEITHER');
+  if (!isModelCompare) {
+    return { compareVariant: 'default' as const };
+  }
+  return {
+    compareVariant: 'model_compare' as const,
+    leftLabel: 'Option A',
+    rightLabel: 'Option B',
+  };
+}
+
 export async function loadPairwisePresentation(
   db: SQLiteDatabase,
   task: LabelTask,
@@ -42,5 +80,5 @@ export async function loadPairwisePresentation(
     resolveAssetUri(db, leftRemote),
     resolveAssetUri(db, rightRemote),
   ]);
-  return buildPairwisePresentation(items, leftUri, rightUri, sidesSwapped);
+  return buildPairwisePresentation(items, leftUri, rightUri, sidesSwapped, pairwisePresentationOptions(task));
 }

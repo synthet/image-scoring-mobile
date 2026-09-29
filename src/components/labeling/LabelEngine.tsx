@@ -1,8 +1,10 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { BinaryScreen } from '@/components/labeling/BinaryScreen';
+import { BoxQualityScreen } from '@/components/labeling/BoxQualityScreen';
 import { CullingScreen } from '@/components/labeling/CullingScreen';
 import { PairwiseScreen } from '@/components/labeling/PairwiseScreen';
+import { PresenceScreen } from '@/components/labeling/PresenceScreen';
 import { useLabelSession } from '@/hooks/useLabelSession';
 import type { LabelMode } from '@/types/labeling';
 
@@ -25,7 +27,11 @@ export function LabelEngine({ batchId, mode, question }: Props) {
 
   const taskReady =
     session.task &&
-    (mode === 'pairwise' ? session.pairwise != null : session.previewUri != null);
+    (mode === 'pairwise'
+      ? session.pairwise != null
+      : mode === 'box_quality'
+        ? session.boxQuality != null
+        : session.previewUri != null);
 
   if (!taskReady) {
     return (
@@ -44,15 +50,46 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     previewUri,
     allowZoom: session.allowZoom,
     allowUndo: session.allowUndo,
+    onZoomUsed: session.recordZoomUsed,
     onSkip: () => void session.skipTask(),
     onUndo: () => void session.undo(),
   };
 
+  if (mode === 'box_quality' && session.boxQuality) {
+    return (
+      <BoxQualityScreen
+        question={question}
+        previewUri={session.boxQuality.previewUri}
+        subjectCropUri={session.boxQuality.subjectCropUri}
+        detectorBox={session.boxQuality.detectorBox}
+        allowZoom={session.allowZoom}
+        allowUndo={session.allowUndo}
+        onZoomUsed={session.recordZoomUsed}
+        onChoice={(choice) => void session.submitChoice(choice)}
+        onSkip={() => void session.skipTask()}
+        onUndo={() => void session.undo()}
+      />
+    );
+  }
+
+  if (mode === 'presence') {
+    return (
+      <PresenceScreen
+        {...screenProps}
+        onChoice={(choice) => void session.submitChoice(choice)}
+      />
+    );
+  }
+
   if (mode === 'culling') {
     return (
       <CullingScreen
+        key={`${screenProps.previewUri}-${session.task?.id ?? ''}`}
         {...screenProps}
-        onChoice={(choice) => void session.submitChoice(choice)}
+        burstClusterId={session.task?.context?.clusterId}
+        burstIndex={session.task?.context?.burstIndex}
+        burstSize={session.task?.context?.burstSize}
+        onChoice={(choice, options) => void session.submitChoice(choice, options)}
       />
     );
   }
@@ -73,6 +110,7 @@ export function LabelEngine({ batchId, mode, question }: Props) {
         presentation={session.pairwise}
         allowZoom={session.allowZoom}
         allowUndo={session.allowUndo}
+        onZoomUsed={session.recordZoomUsed}
         onDecision={(d) => void session.submitPairwiseChoice(d)}
         onSkip={() => void session.skipTask()}
         onUndo={() => void session.undo()}
@@ -83,7 +121,9 @@ export function LabelEngine({ batchId, mode, question }: Props) {
   return (
     <View style={styles.center}>
       <Text style={styles.doneTitle}>Mode not implemented yet</Text>
-      <Text style={styles.doneBody}>Mode "{mode}" will share the same offline task pipeline.</Text>
+      <Text style={styles.doneBody}>
+        Mode {mode} will share the same offline task pipeline.
+      </Text>
     </View>
   );
 }
