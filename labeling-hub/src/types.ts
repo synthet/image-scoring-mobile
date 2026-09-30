@@ -39,6 +39,8 @@ export interface LabelTask {
   config: TaskConfig;
   context?: {
     clusterId?: string;
+    burstIndex?: number;
+    burstSize?: number;
     compareVariant?: 'model_compare';
     selectionReason?: string;
   };

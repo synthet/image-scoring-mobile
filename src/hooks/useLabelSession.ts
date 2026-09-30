@@ -16,6 +16,7 @@ import {
   loadSinglePreview,
   type BoxQualityPresentation,
 } from '@/services/taskPreviews';
+import { loadBurstLoupeFrames, type BurstLoupeFrame } from '@/services/burstLoupe';
 import { getOrCreateDeviceId } from '@/services/device';
 import type { AnnotationEvent, LabelTask } from '@/types/labeling';
 import {
@@ -37,6 +38,7 @@ export function useLabelSession(batchId: string): {
   allowUndo: boolean;
   allowZoom: boolean;
   recordZoomUsed: () => void;
+  burstLoupeFrames: BurstLoupeFrame[];
 } {
   const db = useSQLiteContext();
   const [task, setTask] = useState<LabelTask | null>(null);
@@ -46,9 +48,11 @@ export function useLabelSession(batchId: string): {
   const [loading, setLoading] = useState(true);
   const [allowUndo, setAllowUndo] = useState(true);
   const [allowZoom, setAllowZoom] = useState(true);
+  const [burstLoupeFrames, setBurstLoupeFrames] = useState<BurstLoupeFrame[]>([]);
   const taskStartedAt = useRef(0);
   const zoomUsedRef = useRef(false);
   const zoomCountRef = useRef(0);
+  const undoUsedRef = useRef(false);
 
   const recordZoomUsed = useCallback(() => {
     zoomUsedRef.current = true;
@@ -56,18 +60,28 @@ export function useLabelSession(batchId: string): {
   }, []);
 
   const hydrateTask = useCallback(
-    async (next: LabelTask | null) => {
+    async (next: LabelTask | null, options?: { fromUndo?: boolean }) => {
       setTask(next);
       taskStartedAt.current = Date.now();
       zoomUsedRef.current = false;
       zoomCountRef.current = 0;
+      if (!options?.fromUndo) {
+        undoUsedRef.current = false;
+      }
 
       if (!next || next.items.length === 0) {
         setPreviewUri(null);
         setBoxQuality(null);
         setPairwise(null);
+        setBurstLoupeFrames([]);
         return;
       }
+
+      const burstFrames =
+        next.mode === 'culling' && next.context?.clusterId
+          ? await loadBurstLoupeFrames(db, batchId, next.context.clusterId, next.id)
+          : [];
+      setBurstLoupeFrames(burstFrames);
 
       if (next.mode === 'pairwise') {
         setPreviewUri(null);
@@ -87,7 +101,7 @@ export function useLabelSession(batchId: string): {
       setBoxQuality(null);
       setPreviewUri(await loadSinglePreview(db, next));
     },
-    [db],
+    [batchId, db],
   );
 
   const loadNext = useCallback(async () => {
@@ -128,6 +142,7 @@ export function useLabelSession(batchId: string): {
           durationMs: Date.now() - startedAt,
           zoomUsed: zoomUsedRef.current,
           zoomCount: zoomCountRef.current > 0 ? zoomCountRef.current : undefined,
+          undoUsed: undoUsedRef.current || undefined,
         },
         createdAt: new Date().toISOString(),
       };
@@ -166,7 +181,8 @@ export function useLabelSession(batchId: string): {
   const undo = useCallback(async () => {
     const restored = await undoLastAnnotation(db, batchId);
     if (restored) {
-      await hydrateTask(restored);
+      await hydrateTask(restored, { fromUndo: true });
+      undoUsedRef.current = true;
     }
   }, [batchId, db, hydrateTask]);
 
@@ -183,5 +199,6 @@ export function useLabelSession(batchId: string): {
     allowUndo,
     allowZoom,
     recordZoomUsed,
+    burstLoupeFrames,
   };
 }

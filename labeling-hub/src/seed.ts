@@ -1,5 +1,5 @@
 import type { LabelBatch } from './types.js';
-import { batchCount, upsertBatch } from './db.js';
+import { hasBatchWithExperiment, upsertBatch } from './db.js';
 
 function previewUrl(seed: number): string {
   return `https://picsum.photos/seed/hub-${seed}/1800/1200`;
@@ -44,6 +44,47 @@ function hubCullingBatch(): LabelBatch {
       config: {
         choices: ['PICK', 'KEEP', 'REJECT'],
         presentation: PRESENTATION,
+      },
+    })),
+  };
+}
+
+function hubCullingBurstBatch(): LabelBatch {
+  const batchId = crypto.randomUUID();
+  const experimentId = 'hub-culling-burst-seed-v1';
+  const question = 'Grade this burst frame (hub seed)';
+  const config = {
+    choices: ['PICK', 'KEEP', 'REJECT'],
+    presentation: PRESENTATION,
+  };
+  const seeds = [211, 212, 213, 214];
+  const clusterId = 'hub-burst-cluster-1';
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'culling',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks: seeds.map((seed, index) => ({
+      id: crypto.randomUUID(),
+      batchId,
+      mode: 'culling',
+      items: [
+        {
+          imageId: `hub-burst-${seed}`,
+          assets: { preview: previewUrl(seed) },
+        },
+      ],
+      question,
+      experimentId,
+      schemaVersion: 1,
+      config,
+      context: {
+        clusterId,
+        burstIndex: index,
+        burstSize: seeds.length,
       },
     })),
   };
@@ -159,19 +200,26 @@ function hubPairwiseCompareBatch(): LabelBatch {
   };
 }
 
-export function seedDemoBatchIfEmpty(): LabelBatch | null {
-  if (batchCount() > 0) {
-    return null;
-  }
+const HUB_SEED_FACTORIES = [
+  hubCullingBatch,
+  hubCullingBurstBatch,
+  hubBoxQualityBatch,
+  hubPresenceBatch,
+  hubPairwiseCompareBatch,
+];
 
-  const batches = [
-    hubCullingBatch(),
-    hubBoxQualityBatch(),
-    hubPresenceBatch(),
-    hubPairwiseCompareBatch(),
-  ];
-  for (const batch of batches) {
+/** Upsert any demo batch whose `experimentId` is not already in the hub DB. */
+export function seedDemoBatches(): LabelBatch | null {
+  let firstInserted: LabelBatch | null = null;
+  for (const create of HUB_SEED_FACTORIES) {
+    const batch = create();
+    if (hasBatchWithExperiment(batch.experimentId)) {
+      continue;
+    }
     upsertBatch(batch);
+    if (!firstInserted) {
+      firstInserted = batch;
+    }
   }
-  return batches[0];
+  return firstInserted;
 }

@@ -219,3 +219,10 @@ export function listAnnotationsSince(since: string | null): AnnotationEvent[] {
 export function batchCount(): number {
   return (getDb().prepare(`SELECT COUNT(*) as c FROM batches`).get() as { c: number }).c;
 }
+
+export function hasBatchWithExperiment(experimentId: string): boolean {
+  const row = getDb()
+    .prepare(`SELECT 1 FROM batches WHERE experiment_id = ? LIMIT 1`)
+    .get(experimentId);
+  return row != null;
+}

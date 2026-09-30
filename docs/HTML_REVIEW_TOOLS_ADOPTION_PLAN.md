@@ -161,8 +161,8 @@ export interface BoundingBox {
 | Box quality dual-panel review | **Shipped** | `BoxQualityScreen`, `box_quality` mode, orange `primaryBox` overlay via metadata |
 | Detector model pairwise compare | **Shipped** | `PairwiseScreen` + `NEITHER`, `compareVariant: 'model_compare'` |
 | Presence verification | **Shipped** | `PresenceScreen`, swipe shortcuts + tap buttons |
-| Burst star / best-in-burst | **Partial** | Star toggle + `isBest` on annotations when `clusterId` set; multi-frame loupe carousel **not yet** |
+| Burst star / best-in-burst | **Shipped** | Star toggle + `isBest`; `BurstLoupeModal` swipes cluster frames with pinch zoom |
 | Hub + offline demo seeds | **Shipped** | `demoBatch.ts`, `labeling-hub/src/seed.ts` |
-| Interaction metrics | **Partial** | `zoomUsed` / `zoomCount` recorded when preview zoom opens |
+| Interaction metrics | **Shipped** | `zoomUsed` / `zoomCount` on preview or loupe zoom; `undoUsed` when reviewer undoes before submit |
 
 **Verify locally:** `npm run typecheck`, `npm run hub:typecheck`, `npx expo lint`. Home screen demo buttons load each mode without the hub.

@@ -13,7 +13,15 @@ npm install
 npm run dev
 ```
 
-On first boot, an empty database gets a **6-task culling seed batch** (`hub-culling-seed-v1`).
+On startup, the hub **upserts any missing demo batches** by stable `experimentId` (safe to restart after upgrading the hub):
+
+| `experimentId` | Mode | Notes |
+|----------------|------|--------|
+| `hub-culling-seed-v1` | culling | 6 single-frame tasks |
+| `hub-culling-burst-seed-v1` | culling | 4-frame burst (`clusterId`, loupe) |
+| `hub-box-quality-seed-v1` | box_quality | preview + `subject_crop` |
+| `hub-presence-seed-v1` | presence | Present / Absent / Unsure |
+| `hub-detector-compare-seed-v1` | pairwise | Option A/B + Neither |
 
 ## Auth
 

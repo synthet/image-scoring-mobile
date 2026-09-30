@@ -13,19 +13,27 @@ This repo implements the **mobile labeler** described in the Vexlum human-labeli
 
 Shared API/schema authority stays in `image-scoring-backend`. See [docs/LABELING_API.md](./docs/LABELING_API.md).
 
+HTML review tool adoption (box quality, presence, detector compare, burst culling) is tracked in [docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md](./docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md).
+
 ## MVP status
 
 Implemented in this repo:
 
 - Expo Router shell (`src/app/`)
 - SQLite schema (batches, tasks, annotations, outbox, asset cache)
-- Pick / Keep / Reject (`culling`), Good / Bad (`binary`), and pairwise (`LEFT` / `RIGHT` / `EQUAL` / `CANNOT_JUDGE`) UI with undo, skip, and zoom
+- Labeling modes:
+  - **Culling** — Pick / Keep / Reject, burst star (`isBest`), burst loupe + thumbnails, swipe shortcuts
+  - **Binary** — Good / Bad
+  - **Presence** — Present / Absent / Unsure with swipe shortcuts
+  - **Box quality** — dual preview + primary-box overlay
+  - **Pairwise** — Left / Right / Equal / Cannot judge; model compare adds **Neither** (Prefer A / B)
+- Undo, skip, zoom interaction metrics (`zoomUsed`, `zoomCount`, `undoUsed`)
 - Background annotation outbox flush
-- Demo batch (Picsum previews) for end-to-end UI testing without a hub
+- Demo batches (Picsum previews) on the home screen for offline testing
 
 ### Labeling hub (step 4)
 
-Minimal broker in [`labeling-hub/`](./labeling-hub/README.md) — SQLite, mobile + machine tokens, seed batch on first run.
+Minimal broker in [`labeling-hub/`](./labeling-hub/README.md) — SQLite, mobile + machine tokens, demo seed batches on startup (missing `experimentId`s are inserted automatically).
 
 ```bash
 npm run hub:dev
@@ -37,19 +45,19 @@ Not yet implemented (follow-on):
 
 - Production Hetzner deploy (PostgreSQL + object storage)
 - Local task builder / sync agent in `image-scoring-backend`
-- Swipe gestures (optional enhancement on existing modes)
-- Gesture swipes (buttons provided for clarity)
 
 ## Development
 
 ```bash
 npm install
 npm run typecheck
+npm run hub:typecheck
+npx expo lint
 npx expo start
 ```
 
-Configure hub URL and access token under **Settings**. Use **Load demo culling batch** on the home screen to exercise labeling offline.
+Configure hub URL and access token under **Settings**. Use the home screen **Demo:** buttons to exercise each labeling mode offline.
 
 ## Recommended vertical slice (from architecture)
 
-Local batch → previews → Hetzner → this app → annotations → local human-label import. The demo batch simulates the mobile half until the hub and backend sync land.
+Local batch → previews → Hetzner → this app → annotations → local human-label import. Demo batches simulate the mobile half until the hub and backend sync land.

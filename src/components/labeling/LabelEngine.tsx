@@ -89,6 +89,7 @@ export function LabelEngine({ batchId, mode, question }: Props) {
         burstClusterId={session.task?.context?.clusterId}
         burstIndex={session.task?.context?.burstIndex}
         burstSize={session.task?.context?.burstSize}
+        burstLoupeFrames={session.burstLoupeFrames}
         onChoice={(choice, options) => void session.submitChoice(choice, options)}
       />
     );

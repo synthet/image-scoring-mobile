@@ -93,6 +93,17 @@ export async function listBatches(db: SQLiteDatabase): Promise<BatchSummary[]> {
   }));
 }
 
+export async function listTasksInBatch(
+  db: SQLiteDatabase,
+  batchId: string,
+): Promise<LabelTask[]> {
+  const rows = await db.getAllAsync<{ payload_json: string }>(
+    `SELECT payload_json FROM tasks WHERE batch_id = ? ORDER BY position ASC`,
+    [batchId],
+  );
+  return rows.map((row) => JSON.parse(row.payload_json) as LabelTask);
+}
+
 export async function getNextPendingTask(
   db: SQLiteDatabase,
   batchId: string,

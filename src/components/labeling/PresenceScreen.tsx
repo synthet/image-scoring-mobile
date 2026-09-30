@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
+import { resolveLabelSwipe } from '@/utils/labelSwipe';
+
 import { LabelChoiceButton } from '@/components/labeling/LabelChoiceButton';
 import { LabelSecondaryActions } from '@/components/labeling/LabelSecondaryActions';
 import { ZoomablePreview } from '@/components/ZoomablePreview';
@@ -17,8 +19,6 @@ type Props = {
   allowUndo?: boolean;
 };
 
-const SWIPE_THRESHOLD = 56;
-
 export function PresenceScreen({
   question,
   previewUri,
@@ -33,16 +33,12 @@ export function PresenceScreen({
     .activeOffsetX([-24, 24])
     .activeOffsetY([-24, 24])
     .onEnd((event) => {
-      const { translationX, translationY } = event;
-      if (Math.abs(translationX) > Math.abs(translationY)) {
-        if (translationX > SWIPE_THRESHOLD) {
-          onChoice('PRESENT');
-        } else if (translationX < -SWIPE_THRESHOLD) {
-          onChoice('ABSENT');
-        }
-        return;
-      }
-      if (translationY < -SWIPE_THRESHOLD) {
+      const direction = resolveLabelSwipe(event.translationX, event.translationY);
+      if (direction === 'right') {
+        onChoice('PRESENT');
+      } else if (direction === 'left') {
+        onChoice('ABSENT');
+      } else if (direction === 'up') {
         onChoice('UNSURE');
       }
     })

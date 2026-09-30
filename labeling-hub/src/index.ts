@@ -11,7 +11,7 @@ import {
   storeAnnotations,
   upsertBatch,
 } from './db.js';
-import { seedDemoBatchIfEmpty } from './seed.js';
+import { seedDemoBatches } from './seed.js';
 import type { AnnotationEvent, LabelBatch } from './types.js';
 
 const port = Number(process.env.PORT ?? 8787);
@@ -22,9 +22,11 @@ const bindings: HubBindings = {
 };
 
 openDb(dbPath);
-const seeded = seedDemoBatchIfEmpty();
+const seeded = seedDemoBatches();
 if (seeded) {
-  console.log(`Seeded demo batch ${seeded.id} (${seeded.tasks.length} tasks)`);
+  console.log(
+    `Ensured hub demo batches (new: ${seeded.experimentId}, ${seeded.tasks.length} tasks in that batch)`,
+  );
 }
 
 const app = new Hono();
