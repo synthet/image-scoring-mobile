@@ -49,7 +49,7 @@ Docs: https://docs.expo.dev/eas/index.md
 
 - Modes and choice keys live in `src/types/labeling.ts`. Screen routing is in `src/components/labeling/LabelEngine.tsx`.
 - Offline demos: `src/fixtures/demoBatch.ts`. Hub seeds: `labeling-hub/src/seed.ts`.
-- Ecosystem HTML tool mapping: `docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md`.
+- Task composition (preferred): `docs/LABELING_TASK_FRAMEWORK.md`. HTML inventory: `docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md`.
 
 ## Rules
 

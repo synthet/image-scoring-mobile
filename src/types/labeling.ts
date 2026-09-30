@@ -1,7 +1,10 @@
+import type { TaskInteractionSpec } from '@/labeling/taskSpec';
+
 export type LabelMode =
   | 'binary'
   | 'presence'
   | 'box_quality'
+  | 'box_draw'
   | 'culling'
   | 'pairwise'
   | 'best_of_n'
@@ -51,6 +54,8 @@ export interface TaskPresentation {
 export interface TaskConfig {
   choices: string[];
   presentation?: TaskPresentation;
+  /** When set, drives layout and capabilities instead of hard-coded `mode` behavior. */
+  interaction?: TaskInteractionSpec;
 }
 
 export interface LabelTask {
@@ -99,6 +104,13 @@ export interface AnnotationAnswer {
   cannotJudge?: boolean;
   /** Burst culling: reviewer marked this frame as best-in-burst. */
   isBest?: boolean;
+  /** Region geometry + class choice (multi-box annotation tasks). */
+  geometry?: {
+    boxes: [number, number, number, number][];
+    choiceId: string;
+    priorChoice?: string;
+    imageId: string;
+  };
   /** Present for pairwise tasks — records on-screen layout at submit time. */
   pairwise?: PairwiseAnswerContext;
 }

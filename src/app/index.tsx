@@ -16,6 +16,7 @@ import { ProgressHeader } from '@/components/ProgressHeader';
 import { listBatches, type BatchSummary } from '@/db/repository';
 import {
   createDemoBinaryBatch,
+  createDemoBoxDrawBatch,
   createDemoBoxQualityBatch,
   createDemoCullingBatch,
   createDemoModelCompareBatch,
@@ -66,6 +67,7 @@ export default function HomeScreen() {
         | 'binary'
         | 'pairwise'
         | 'box_quality'
+        | 'box_draw'
         | 'presence'
         | 'model_compare',
     ) => {
@@ -78,7 +80,9 @@ export default function HomeScreen() {
               ? createDemoBinaryBatch()
               : kind === 'box_quality'
                 ? createDemoBoxQualityBatch()
-                : kind === 'presence'
+                : kind === 'box_draw'
+                  ? createDemoBoxDrawBatch()
+                  : kind === 'presence'
                   ? createDemoPresenceBatch()
                   : kind === 'model_compare'
                     ? createDemoModelCompareBatch()
@@ -188,6 +192,17 @@ export default function HomeScreen() {
             <ActivityIndicator color="#4DA3FF" />
           ) : (
             <Text style={styles.secondaryBtnText}>Demo: Box quality</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => void loadDemoBatch('box_draw')}
+          disabled={busy === 'demo-box_draw'}
+        >
+          {busy === 'demo-box_draw' ? (
+            <ActivityIndicator color="#4DA3FF" />
+          ) : (
+            <Text style={styles.secondaryBtnText}>Demo: Region + class</Text>
           )}
         </Pressable>
         <Pressable

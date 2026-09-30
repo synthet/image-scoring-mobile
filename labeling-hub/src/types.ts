@@ -4,6 +4,7 @@ export type LabelMode =
   | 'binary'
   | 'presence'
   | 'box_quality'
+  | 'box_draw'
   | 'culling'
   | 'pairwise'
   | 'best_of_n'

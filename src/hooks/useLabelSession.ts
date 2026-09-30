@@ -19,6 +19,7 @@ import {
 import { loadBurstLoupeFrames, type BurstLoupeFrame } from '@/services/burstLoupe';
 import { getOrCreateDeviceId } from '@/services/device';
 import type { AnnotationEvent, LabelTask } from '@/types/labeling';
+import { buildGeometryAnswer, type GeometrySubmitPayload } from '@/labeling/annotationPayload';
 import {
   pairwiseAnswerFromDecision,
   type PairwiseDecision,
@@ -32,6 +33,7 @@ export function useLabelSession(batchId: string): {
   pairwise: PairwisePresentation | null;
   loading: boolean;
   submitChoice: (choice: string, options?: { isBest?: boolean }) => Promise<void>;
+  submitGeometry: (payload: GeometrySubmitPayload) => Promise<void>;
   submitPairwiseChoice: (decision: PairwiseDecision) => Promise<void>;
   skipTask: () => Promise<void>;
   undo: () => Promise<void>;
@@ -164,6 +166,13 @@ export function useLabelSession(batchId: string): {
     [persistAnnotation],
   );
 
+  const submitGeometry = useCallback(
+    async (payload: GeometrySubmitPayload) => {
+      await persistAnnotation(buildGeometryAnswer(payload));
+    },
+    [persistAnnotation],
+  );
+
   const submitPairwiseChoice = useCallback(
     async (decision: PairwiseDecision) => {
       if (!pairwise) {
@@ -193,6 +202,7 @@ export function useLabelSession(batchId: string): {
     pairwise,
     loading,
     submitChoice,
+    submitGeometry,
     submitPairwiseChoice,
     skipTask,
     undo,

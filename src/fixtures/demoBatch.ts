@@ -161,6 +161,50 @@ export function createDemoBoxQualityBatch(taskCount = 10): LabelBatch {
   };
 }
 
+const BOX_DRAW_PRIORS = ['UNKNOWN', 'POSITIVE', 'POSITIVE', 'POSITIVE', 'UNKNOWN', 'POSITIVE', 'POSITIVE', 'UNKNOWN'];
+
+export function createDemoBoxDrawBatch(taskCount = 8): LabelBatch {
+  const batchId = Crypto.randomUUID();
+  const experimentId = 'box-draw-demo-v1';
+  const question = 'Draw regions for the target class, or pick a classification';
+  const config: TaskConfig = {
+    choices: ['POSITIVE', 'NEGATIVE', 'UNKNOWN'],
+    presentation: PRESENTATION,
+  };
+
+  const tasks: LabelTask[] = DEMO_SEEDS.slice(0, taskCount).map((seed, index) => {
+    const prior = BOX_DRAW_PRIORS[index % BOX_DRAW_PRIORS.length];
+    return {
+      id: Crypto.randomUUID(),
+      batchId,
+      mode: 'box_draw',
+      items: [
+        {
+          imageId: `demo-geometry-${seed}`,
+          assets: {
+            preview: `https://picsum.photos/seed/vexlum-geometry-${seed}/1280/960`,
+          },
+          metadata: { priorChoice: prior },
+        },
+      ],
+      question,
+      experimentId,
+      schemaVersion: 1,
+      config,
+    };
+  });
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'box_draw',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks,
+  };
+}
+
 export function createDemoPresenceBatch(taskCount = 12): LabelBatch {
   return createDemoBatch(
     'presence',

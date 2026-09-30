@@ -41,3 +41,7 @@ labeling-hub/data/
 # generated native folders
 /ios
 /android
+
+# Maintainer-only proprietary / third-party notes (never commit)
+docs/private/
+.docs/private/

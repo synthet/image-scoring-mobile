@@ -1,11 +1,8 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { BinaryScreen } from '@/components/labeling/BinaryScreen';
-import { BoxQualityScreen } from '@/components/labeling/BoxQualityScreen';
-import { CullingScreen } from '@/components/labeling/CullingScreen';
-import { PairwiseScreen } from '@/components/labeling/PairwiseScreen';
-import { PresenceScreen } from '@/components/labeling/PresenceScreen';
+import { TaskWorkspace } from '@/components/labeling/TaskWorkspace';
 import { useLabelSession } from '@/hooks/useLabelSession';
+import { resolveTaskSpec } from '@/labeling/taskSpec';
 import type { LabelMode } from '@/types/labeling';
 
 type Props = {
@@ -14,7 +11,7 @@ type Props = {
   question: string;
 };
 
-export function LabelEngine({ batchId, mode, question }: Props) {
+export function LabelEngine({ batchId, mode: _mode, question }: Props) {
   const session = useLabelSession(batchId);
 
   if (session.loading) {
@@ -25,11 +22,15 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     );
   }
 
+  const task = session.task;
+  const spec = task ? resolveTaskSpec(task) : null;
+
   const taskReady =
-    session.task &&
-    (mode === 'pairwise'
+    task &&
+    spec &&
+    (spec.layout === 'pairwise_images'
       ? session.pairwise != null
-      : mode === 'box_quality'
+      : spec.layout === 'dual_image'
         ? session.boxQuality != null
         : session.previewUri != null);
 
@@ -44,89 +45,7 @@ export function LabelEngine({ batchId, mode, question }: Props) {
     );
   }
 
-  const previewUri = session.previewUri!;
-  const screenProps = {
-    question,
-    previewUri,
-    allowZoom: session.allowZoom,
-    allowUndo: session.allowUndo,
-    onZoomUsed: session.recordZoomUsed,
-    onSkip: () => void session.skipTask(),
-    onUndo: () => void session.undo(),
-  };
-
-  if (mode === 'box_quality' && session.boxQuality) {
-    return (
-      <BoxQualityScreen
-        question={question}
-        previewUri={session.boxQuality.previewUri}
-        subjectCropUri={session.boxQuality.subjectCropUri}
-        detectorBox={session.boxQuality.detectorBox}
-        allowZoom={session.allowZoom}
-        allowUndo={session.allowUndo}
-        onZoomUsed={session.recordZoomUsed}
-        onChoice={(choice) => void session.submitChoice(choice)}
-        onSkip={() => void session.skipTask()}
-        onUndo={() => void session.undo()}
-      />
-    );
-  }
-
-  if (mode === 'presence') {
-    return (
-      <PresenceScreen
-        {...screenProps}
-        onChoice={(choice) => void session.submitChoice(choice)}
-      />
-    );
-  }
-
-  if (mode === 'culling') {
-    return (
-      <CullingScreen
-        key={`${screenProps.previewUri}-${session.task?.id ?? ''}`}
-        {...screenProps}
-        burstClusterId={session.task?.context?.clusterId}
-        burstIndex={session.task?.context?.burstIndex}
-        burstSize={session.task?.context?.burstSize}
-        burstLoupeFrames={session.burstLoupeFrames}
-        onChoice={(choice, options) => void session.submitChoice(choice, options)}
-      />
-    );
-  }
-
-  if (mode === 'binary') {
-    return (
-      <BinaryScreen
-        {...screenProps}
-        onChoice={(choice) => void session.submitChoice(choice)}
-      />
-    );
-  }
-
-  if (mode === 'pairwise' && session.pairwise) {
-    return (
-      <PairwiseScreen
-        question={question}
-        presentation={session.pairwise}
-        allowZoom={session.allowZoom}
-        allowUndo={session.allowUndo}
-        onZoomUsed={session.recordZoomUsed}
-        onDecision={(d) => void session.submitPairwiseChoice(d)}
-        onSkip={() => void session.skipTask()}
-        onUndo={() => void session.undo()}
-      />
-    );
-  }
-
-  return (
-    <View style={styles.center}>
-      <Text style={styles.doneTitle}>Mode not implemented yet</Text>
-      <Text style={styles.doneBody}>
-        Mode {mode} will share the same offline task pipeline.
-      </Text>
-    </View>
-  );
+  return <TaskWorkspace session={session} question={question} />;
 }
 
 const styles = StyleSheet.create({

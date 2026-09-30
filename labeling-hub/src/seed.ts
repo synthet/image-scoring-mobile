@@ -90,6 +90,43 @@ function hubCullingBurstBatch(): LabelBatch {
   };
 }
 
+function hubGeometryAnnotateBatch(): LabelBatch {
+  const batchId = crypto.randomUUID();
+  const experimentId = 'hub-geometry-annotate-seed-v1';
+  const question = 'Draw regions or set class (hub seed)';
+  const config = {
+    choices: ['POSITIVE', 'NEGATIVE', 'UNKNOWN'],
+    presentation: PRESENTATION,
+  };
+  const seeds = [311, 312, 313];
+  const priors = ['UNKNOWN', 'POSITIVE', 'POSITIVE'];
+
+  return {
+    id: batchId,
+    experimentId,
+    mode: 'box_draw',
+    question,
+    schemaVersion: 1,
+    config,
+    tasks: seeds.map((seed, index) => ({
+      id: crypto.randomUUID(),
+      batchId,
+      mode: 'box_draw',
+      items: [
+        {
+          imageId: `hub-geometry-${seed}`,
+          assets: { preview: previewUrl(seed) },
+          metadata: { priorChoice: priors[index] },
+        },
+      ],
+      question,
+      experimentId,
+      schemaVersion: 1,
+      config,
+    })),
+  };
+}
+
 function hubBoxQualityBatch(): LabelBatch {
   const batchId = crypto.randomUUID();
   const seeds = [301, 302, 303, 304];
@@ -203,6 +240,7 @@ function hubPairwiseCompareBatch(): LabelBatch {
 const HUB_SEED_FACTORIES = [
   hubCullingBatch,
   hubCullingBurstBatch,
+  hubGeometryAnnotateBatch,
   hubBoxQualityBatch,
   hubPresenceBatch,
   hubPairwiseCompareBatch,
