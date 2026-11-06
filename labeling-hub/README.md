@@ -2,7 +2,7 @@
 
 Minimal **Hetzner-style labeling broker** for local development and early integration. It stores batch manifests and annotations in SQLite; preview images remain remote URLs (no object storage yet).
 
-Canonical API/schema authority will move to `image-scoring-backend` over time. Mobile consumer routes are documented in [`../docs/LABELING_API.md`](../docs/LABELING_API.md).
+Canonical API/schema authority will move to `image-scoring-pipeline` over time. Mobile consumer routes are documented in [`../docs/LABELING_API.md`](../docs/LABELING_API.md).
 
 ## Quick start
 
@@ -20,6 +20,7 @@ On startup, the hub **upserts any missing demo batches** by stable `experimentId
 | `hub-culling-seed-v1` | culling | 6 single-frame tasks |
 | `hub-culling-burst-seed-v1` | culling | 4-frame burst (`clusterId`, loupe) |
 | `hub-box-quality-seed-v1` | box_quality | preview + `subject_crop` |
+| `hub-geometry-annotate-seed-v1` | attribute | `interaction.draw_boxes` + POSITIVE / NEGATIVE / UNKNOWN |
 | `hub-presence-seed-v1` | presence | Present / Absent / Unsure |
 | `hub-detector-compare-seed-v1` | pairwise | Option A/B + Neither |
 

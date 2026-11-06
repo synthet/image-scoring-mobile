@@ -1,4 +1,4 @@
-/** Mirrors mobile `src/types/labeling.ts` — canonical contract lives in image-scoring-backend. */
+/** Mirrors mobile `src/types/labeling.ts` — canonical contract lives in image-scoring-pipeline. */
 
 export type LabelMode =
   | 'binary'
@@ -27,6 +27,8 @@ export interface LabelItem {
 export interface TaskConfig {
   choices: string[];
   presentation?: Record<string, unknown>;
+  /** Same shape as mobile `TaskInteractionSpec` — drives layout when present. */
+  interaction?: Record<string, unknown>;
 }
 
 export interface LabelTask {

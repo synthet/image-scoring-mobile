@@ -20,6 +20,7 @@ import { loadBurstLoupeFrames, type BurstLoupeFrame } from '@/services/burstLoup
 import { getOrCreateDeviceId } from '@/services/device';
 import type { AnnotationEvent, LabelTask } from '@/types/labeling';
 import { buildGeometryAnswer, type GeometrySubmitPayload } from '@/labeling/annotationPayload';
+import { resolveTaskSpec } from '@/labeling/taskSpec';
 import {
   pairwiseAnswerFromDecision,
   type PairwiseDecision,
@@ -79,20 +80,22 @@ export function useLabelSession(batchId: string): {
         return;
       }
 
+      const spec = resolveTaskSpec(next);
       const burstFrames =
-        next.mode === 'culling' && next.context?.clusterId
+        next.context?.clusterId &&
+        (next.mode === 'culling' || spec.capabilities.has('burst_loupe'))
           ? await loadBurstLoupeFrames(db, batchId, next.context.clusterId, next.id)
           : [];
       setBurstLoupeFrames(burstFrames);
 
-      if (next.mode === 'pairwise') {
+      if (spec.layout === 'pairwise_images') {
         setPreviewUri(null);
         setBoxQuality(null);
         setPairwise(await loadPairwisePresentation(db, next));
         return;
       }
 
-      if (next.mode === 'box_quality') {
+      if (spec.layout === 'dual_image') {
         setPairwise(null);
         setPreviewUri(null);
         setBoxQuality(await loadBoxQualityPresentation(db, next));

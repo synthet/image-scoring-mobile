@@ -15,6 +15,28 @@ const PRESENTATION = {
   allow_undo: true,
 };
 
+const GEOMETRY_ANNOTATE_INTERACTION = {
+  layout: 'single_image',
+  capabilities: ['zoom', 'draw_boxes'],
+  choices: [
+    { id: 'POSITIVE', label: 'Target visible', tone: 'good' },
+    { id: 'NEGATIVE', label: 'Not present', tone: 'bad' },
+    { id: 'UNKNOWN', label: 'Unsure', tone: 'warning' },
+  ],
+  requireBoxesForChoiceIds: ['POSITIVE'],
+  promoteChoiceOnDraw: 'POSITIVE',
+};
+
+const MODEL_COMPARE_PAIRWISE_INTERACTION = {
+  layout: 'pairwise_images',
+  capabilities: ['zoom', 'pairwise_blind', 'pairwise_model_compare'],
+  pairwise: {
+    leftLabel: 'Option A',
+    rightLabel: 'Option B',
+    includeNeither: true,
+  },
+};
+
 function hubCullingBatch(): LabelBatch {
   const batchId = crypto.randomUUID();
   const seeds = [201, 202, 203, 204, 205, 206];
@@ -97,6 +119,7 @@ function hubGeometryAnnotateBatch(): LabelBatch {
   const config = {
     choices: ['POSITIVE', 'NEGATIVE', 'UNKNOWN'],
     presentation: PRESENTATION,
+    interaction: GEOMETRY_ANNOTATE_INTERACTION,
   };
   const seeds = [311, 312, 313];
   const priors = ['UNKNOWN', 'POSITIVE', 'POSITIVE'];
@@ -104,14 +127,14 @@ function hubGeometryAnnotateBatch(): LabelBatch {
   return {
     id: batchId,
     experimentId,
-    mode: 'box_draw',
+    mode: 'attribute',
     question,
     schemaVersion: 1,
     config,
     tasks: seeds.map((seed, index) => ({
       id: crypto.randomUUID(),
       batchId,
-      mode: 'box_draw',
+      mode: 'attribute',
       items: [
         {
           imageId: `hub-geometry-${seed}`,
@@ -205,6 +228,7 @@ function hubPairwiseCompareBatch(): LabelBatch {
   const config = {
     choices: ['LEFT', 'RIGHT', 'EQUAL', 'NEITHER', 'CANNOT_JUDGE'],
     presentation: PRESENTATION,
+    interaction: MODEL_COMPARE_PAIRWISE_INTERACTION,
   };
   const pairs: [number, number][] = [[501, 502], [503, 504]];
   return {
@@ -232,7 +256,6 @@ function hubPairwiseCompareBatch(): LabelBatch {
       experimentId,
       schemaVersion: 1,
       config,
-      context: { compareVariant: 'model_compare' },
     })),
   };
 }

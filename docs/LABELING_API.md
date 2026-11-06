@@ -1,6 +1,6 @@
 # Mobile labeling hub API (consumer notes)
 
-This repository implements the **mobile client** for the Vexlum human-labeling subsystem. Canonical REST paths, OpenAPI, and database schema are owned by `image-scoring-backend` (`docs/technical/API_CONTRACT.md`, `docs/reference/api/openapi.yaml`).
+This repository implements the **mobile client** for the Vexlum human-labeling subsystem. Canonical REST paths, OpenAPI, and database schema are owned by `image-scoring-pipeline` (`docs/technical/API_CONTRACT.md`, `docs/reference/api/openapi.yaml`).
 
 Until those sources publish labeling endpoints, this app uses the provisional routes below (see `src/api/labelingHubClient.ts`).
 

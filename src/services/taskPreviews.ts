@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { resolvePreviewUri } from '@/services/assetCache';
+import { resolveTaskSpec } from '@/labeling/taskSpec';
 import type { BoundingBox, LabelTask } from '@/types/labeling';
 import { parsePrimaryDetectorBox } from '@/utils/detectorBox';
 import {
@@ -53,15 +54,27 @@ export async function loadBoxQualityPresentation(
 }
 
 function pairwisePresentationOptions(task: LabelTask) {
+  const spec = resolveTaskSpec(task);
   const isModelCompare =
-    task.context?.compareVariant === 'model_compare' || task.config.choices.includes('NEITHER');
+    spec.capabilities.has('pairwise_model_compare') ||
+    task.context?.compareVariant === 'model_compare' ||
+    spec.pairwise?.includeNeither === true ||
+    task.config.choices.includes('NEITHER');
+
+  const leftLabel = spec.pairwise?.leftLabel ?? (isModelCompare ? 'Option A' : undefined);
+  const rightLabel = spec.pairwise?.rightLabel ?? (isModelCompare ? 'Option B' : undefined);
+
   if (!isModelCompare) {
-    return { compareVariant: 'default' as const };
+    return {
+      compareVariant: 'default' as const,
+      leftLabel,
+      rightLabel,
+    };
   }
   return {
     compareVariant: 'model_compare' as const,
-    leftLabel: 'Option A',
-    rightLabel: 'Option B',
+    leftLabel: leftLabel ?? 'Option A',
+    rightLabel: rightLabel ?? 'Option B',
   };
 }
 

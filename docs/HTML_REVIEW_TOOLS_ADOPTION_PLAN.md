@@ -10,10 +10,10 @@ The following tools exist across sibling repositories and provide battle-tested 
 
 | Tool | Source Repository / Path | Review Mode | Key UX Pattern |
 |------|-------------------------|-------------|----------------|
-| **Primary-Box Quality Review** | `image-scoring-backend`:<br>[box_page/index.html](file:///D:/Projects/image-scoring-backend/.agent/scratch/bird_v1_owner_labels/box_page/index.html) | Bounding box quality (`usable`, `poor_crop`, `wrong_target`, `unsure`) | Dual synchronized panels: whole image with detector box overlay + magnified subject crop |
-| **Bird Box Model Comparison** | `image-scoring-backend`:<br>[bird_detect_compare/page/index.html](file:///D:/Projects/image-scoring-backend/.agent/scratch/bird_detect_compare/page/index.html) | Model A vs Model B detector comparison (`a`, `b`, `tie`, `neither`, `unsure`) | Side-by-side detector comparison on same photo with 5 decision choices including 'neither' |
-| **Blind Bird Presence Review** | `image-scoring-backend`:<br>[page/index.html](file:///D:/Projects/image-scoring-backend/.agent/scratch/bird_v1_owner_labels/page/index.html) | 3-state presence (`bird`, `no_bird`, `unsure`) | Clean image stage, single-click 200% zoom toggle, progress meter, quick keyboard/tap shortcuts |
-| **Detector Benchmark Labelling** | `image-scoring-backend`:<br>[label/index.html](file:///D:/Projects/image-scoring-backend/.agent/scratch/detector_benchmark/label/index.html) | Detection ground truth verification | Minimalist high-throughput verification with CSV export |
+| **Primary-Box Quality Review** | `image-scoring-pipeline`:<br>[box_page/index.html](file:///D:/Projects/image-scoring-pipeline/.agent/scratch/bird_v1_owner_labels/box_page/index.html) | Bounding box quality (`usable`, `poor_crop`, `wrong_target`, `unsure`) | Dual synchronized panels: whole image with detector box overlay + magnified subject crop |
+| **Bird Box Model Comparison** | `image-scoring-pipeline`:<br>[bird_detect_compare/page/index.html](file:///D:/Projects/image-scoring-pipeline/.agent/scratch/bird_detect_compare/page/index.html) | Model A vs Model B detector comparison (`a`, `b`, `tie`, `neither`, `unsure`) | Side-by-side detector comparison on same photo with 5 decision choices including 'neither' |
+| **Blind Bird Presence Review** | `image-scoring-pipeline`:<br>[page/index.html](file:///D:/Projects/image-scoring-pipeline/.agent/scratch/bird_v1_owner_labels/page/index.html) | 3-state presence (`bird`, `no_bird`, `unsure`) | Clean image stage, single-click 200% zoom toggle, progress meter, quick keyboard/tap shortcuts |
+| **Detector Benchmark Labelling** | `image-scoring-pipeline`:<br>[label/index.html](file:///D:/Projects/image-scoring-pipeline/.agent/scratch/detector_benchmark/label/index.html) | Detection ground truth verification | Minimalist high-throughput verification with CSV export |
 | **Burst-series culling & star labeler** | Inspired UX (local reference inventory under gitignored `docs/private/`) | Multi-image burst series (Pick/Keep/Reject + Star) | Multi-card burst comparison, 100% Loupe pan/zoom, consensus hints, burst-level completion |
 | **Detection & Eye Score Galleries** | `image-scoring-model`:<br>[bird-detect gallery](file:///D:/Projects/image-scoring-model/.agent/scratch/bird-detect-run/gallery/index.html),<br>[eye-score gallery](file:///D:/Projects/image-scoring-model/.agent/scratch/eye-score-run/gallery/index.html) | Inspection & validation | Canvas bounding box overlays colored by confidence gradient, threshold filtering, lightbox stage |
 | **Design Tokens & Badges** | `image-scoring-ui`:<br>[embedding-icons.html](file:///D:/Projects/image-scoring-ui/preview/embedding-icons.html) | UI tokens & status badges | Standard colors (`--pick: #3fb950`, `--keep: #d29922`, `--reject: #f85149`, `--best: #58a6ff`) |
@@ -90,7 +90,7 @@ Adopt burst-series culling patterns (pick / keep / reject, loupe, best-in-burst 
 ### Phase 4: Model Detection Comparison (`pairwise_compare`)
 
 #### Context & Objective
-Adopted from [bird_detect_compare/page/index.html](file:///D:/Projects/image-scoring-backend/.agent/scratch/bird_detect_compare/page/index.html). When evaluating two detector models (e.g., `v0` vs `v1`) on the same image, reviewers compare the proposed crops side-by-side. Crucially, both models might fail, requiring a 5th option (`Neither`).
+Adopted from [bird_detect_compare/page/index.html](file:///D:/Projects/image-scoring-pipeline/.agent/scratch/bird_detect_compare/page/index.html). When evaluating two detector models (e.g., `v0` vs `v1`) on the same image, reviewers compare the proposed crops side-by-side. Crucially, both models might fail, requiring a 5th option (`Neither`).
 
 #### Workflow & Choices
 - **Prefer A** (<kbd>1</kbd>): Option A box is superior.
@@ -185,13 +185,11 @@ export interface BoundingBox {
 |-----------|--------------|-------------------------|-----|
 | D1 blind comparison | `pairwise` + `compareVariant: 'model_compare'` | Prefer A/B → `LEFT`/`RIGHT`; tie / neither / unsure → `EQUAL` / `NEITHER` / `CANNOT_JUDGE`; side randomization matches blind review | Batch must ship two crops per disagreement; decode mapping stays in export pipeline (not in app) |
 | Raptor presence | `presence` | `bird` → `PRESENT`, `no_bird` → `ABSENT`, `unsure` → `UNSURE` | Progress bar / 200% zoom toggle are optional polish; core flow matches |
-| Raptor bird-box (reference) | `box_draw` or custom `interaction` | `answer.geometry` with normalized boxes + `choiceId`; map to `raptor_boxes.json` in export pipeline | **Framework** — `GeometryAnnotateScreen` via `draw_boxes` capability; see [LABELING_TASK_FRAMEWORK.md](./LABELING_TASK_FRAMEWORK.md) |
+| Raptor bird-box (reference) | `attribute` + `interaction.draw_boxes` (or legacy `box_draw`) | `answer.geometry` with normalized boxes + `choiceId`; map to `raptor_boxes.json` in export pipeline | **Shipped (MVP)** — `GeometryAnnotateScreen`, hub `hub-geometry-annotate-seed-v1`, demo **Region + class**; export mapping stays in backend |
 
-**Suggested next milestone (raptor_box_page):**
+**Follow-on (production raptor batches):**
 
-1. Extend `AnnotationAnswer` with `boxes?: BoundingBox[]` (or `[x1,y1,x2,y2][]`) and optional `presenceOverride` when revisiting unsure priors.
-2. Full-screen `BoxDrawScreen` with `react-native-gesture-handler` rect drag on normalized coordinates (mirror HTML `pointerdown` / `pointermove` / `pointerup` on overlay).
-3. Hub seed batch `hub-raptor-box-draw-seed-v1` referencing 1280px-oriented review JPEGs + `context.prior: 'bird' | 'unsure'`.
-4. Machine export compatible with `raptor_boxes.json` shape from the HTML tool.
+1. Hub/machine batches with real review JPEGs and `metadata.priorChoice` (bird / unsure aliases).
+2. Machine export compatible with `raptor_boxes.json` shape from the HTML tool.
 
-Use the three verified HTML files as UX reference; keep exports authoritative in `image-scoring-backend` / model scratch pipelines.
+Use the three verified HTML files as UX reference; keep exports authoritative in `image-scoring-pipeline` / model scratch pipelines.

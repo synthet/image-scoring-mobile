@@ -137,17 +137,23 @@ function legacySpecForMode(mode: LabelMode, config: TaskConfig): ResolvedTaskSpe
         requireBoxesForChoiceIds: ['POSITIVE', 'BIRD'],
         promoteChoiceOnDraw: 'POSITIVE',
       });
-    case 'pairwise':
+    case 'pairwise': {
+      const includeNeither = config.choices.includes('NEITHER');
       return withCapabilities({
         layout: 'pairwise_images',
         choices: choicesFromConfig,
-        capabilities: ['zoom', 'pairwise_blind'],
+        capabilities: [
+          'zoom',
+          'pairwise_blind',
+          ...(includeNeither ? (['pairwise_model_compare'] as TaskCapability[]) : []),
+        ],
         pairwise: {
           leftLabel: 'Left',
           rightLabel: 'Right',
-          includeNeither: config.choices.includes('NEITHER'),
+          includeNeither,
         },
       });
+    }
     default:
       return withCapabilities({
         layout: 'single_image',

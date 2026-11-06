@@ -11,9 +11,9 @@ This repo implements the **mobile labeler** described in the Vexlum human-labeli
 - Persist every annotation to SQLite before advancing the UI
 - Upload results asynchronously via a sync outbox
 
-Shared API/schema authority stays in `image-scoring-backend`. See [docs/LABELING_API.md](./docs/LABELING_API.md).
+Shared API/schema authority stays in `image-scoring-pipeline`. See [docs/LABELING_API.md](./docs/LABELING_API.md).
 
-HTML review tool adoption (box quality, presence, detector compare, burst culling) is tracked in [docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md](./docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md).
+Task composition is config-driven — see [docs/LABELING_TASK_FRAMEWORK.md](./docs/LABELING_TASK_FRAMEWORK.md). HTML review inventory and adoption status: [docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md](./docs/HTML_REVIEW_TOOLS_ADOPTION_PLAN.md).
 
 ## MVP status
 
@@ -26,6 +26,7 @@ Implemented in this repo:
   - **Binary** — Good / Bad
   - **Presence** — Present / Absent / Unsure with swipe shortcuts
   - **Box quality** — dual preview + primary-box overlay
+  - **Region + class** — multi-box geometry + ternary class (`answer.geometry`; `config.interaction`)
   - **Pairwise** — Left / Right / Equal / Cannot judge; model compare adds **Neither** (Prefer A / B)
 - Undo, skip, zoom interaction metrics (`zoomUsed`, `zoomCount`, `undoUsed`)
 - Background annotation outbox flush
@@ -44,7 +45,7 @@ Point the app Settings to `http://localhost:8787` with token `dev-mobile-token`,
 Not yet implemented (follow-on):
 
 - Production Hetzner deploy (PostgreSQL + object storage)
-- Local task builder / sync agent in `image-scoring-backend`
+- Local task builder / sync agent in `image-scoring-pipeline`
 
 ## Development
 

@@ -3,15 +3,13 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { TaskWorkspace } from '@/components/labeling/TaskWorkspace';
 import { useLabelSession } from '@/hooks/useLabelSession';
 import { resolveTaskSpec } from '@/labeling/taskSpec';
-import type { LabelMode } from '@/types/labeling';
 
 type Props = {
   batchId: string;
-  mode: LabelMode;
   question: string;
 };
 
-export function LabelEngine({ batchId, mode: _mode, question }: Props) {
+export function LabelEngine({ batchId, question }: Props) {
   const session = useLabelSession(batchId);
 
   if (session.loading) {

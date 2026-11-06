@@ -65,7 +65,7 @@ export default function SettingsScreen() {
 
       <Text style={styles.note}>
         Dev hub: run `npm run hub:dev` from the repo root, then use token `{DEV_MOBILE_TOKEN}`.
-        Shared REST paths and payload schemas are owned by image-scoring-backend — see
+        Shared REST paths and payload schemas are owned by image-scoring-pipeline — see
         docs/LABELING_API.md.
       </Text>
     </View>

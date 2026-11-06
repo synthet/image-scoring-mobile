@@ -27,7 +27,7 @@ async function hubFetch(path: string, init: RequestInit = {}): Promise<Response>
   return fetch(`${baseUrl}${path}`, { ...init, headers });
 }
 
-/** Provisional mobile consumer contract — canonical definitions live in image-scoring-backend. */
+/** Provisional mobile consumer contract — canonical definitions live in image-scoring-pipeline. */
 export const LabelingHubRoutes = {
   listBatches: '/v1/batches',
   leaseBatch: (batchId: string) => `/v1/batches/${batchId}/lease`,

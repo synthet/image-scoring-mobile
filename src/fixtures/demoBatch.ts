@@ -1,5 +1,9 @@
 import * as Crypto from 'expo-crypto';
 
+import {
+  GEOMETRY_ANNOTATE_INTERACTION,
+  MODEL_COMPARE_PAIRWISE_INTERACTION,
+} from '@/labeling/presets';
 import type { LabelBatch, LabelMode, LabelTask, TaskConfig } from '@/types/labeling';
 
 const DEMO_SEEDS = [
@@ -170,6 +174,7 @@ export function createDemoBoxDrawBatch(taskCount = 8): LabelBatch {
   const config: TaskConfig = {
     choices: ['POSITIVE', 'NEGATIVE', 'UNKNOWN'],
     presentation: PRESENTATION,
+    interaction: GEOMETRY_ANNOTATE_INTERACTION,
   };
 
   const tasks: LabelTask[] = DEMO_SEEDS.slice(0, taskCount).map((seed, index) => {
@@ -177,7 +182,7 @@ export function createDemoBoxDrawBatch(taskCount = 8): LabelBatch {
     return {
       id: Crypto.randomUUID(),
       batchId,
-      mode: 'box_draw',
+      mode: 'attribute',
       items: [
         {
           imageId: `demo-geometry-${seed}`,
@@ -197,7 +202,7 @@ export function createDemoBoxDrawBatch(taskCount = 8): LabelBatch {
   return {
     id: batchId,
     experimentId,
-    mode: 'box_draw',
+    mode: 'attribute',
     question,
     schemaVersion: 1,
     config,
@@ -222,6 +227,7 @@ export function createDemoModelCompareBatch(pairCount = 8): LabelBatch {
   const config: TaskConfig = {
     choices: ['LEFT', 'RIGHT', 'EQUAL', 'NEITHER', 'CANNOT_JUDGE'],
     presentation: PRESENTATION,
+    interaction: MODEL_COMPARE_PAIRWISE_INTERACTION,
   };
 
   const tasks: LabelTask[] = DEMO_PAIRS.slice(0, pairCount).map(([seedA, seedB], index) => ({
@@ -247,7 +253,6 @@ export function createDemoModelCompareBatch(pairCount = 8): LabelBatch {
     schemaVersion: 1,
     config,
     context: {
-      compareVariant: 'model_compare',
       selectionReason: index % 2 === 0 ? 'v0-vs-v1' : 'demo',
     },
   }));

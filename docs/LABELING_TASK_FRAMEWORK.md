@@ -30,6 +30,8 @@ HTML review pages in sibling repos are **reference UX**, not templates to copy f
 
 When `config.interaction` is omitted, `resolveTaskSpec()` infers a spec from `mode` (`binary`, `presence`, `culling`, `box_quality`, `box_draw`, `pairwise`).
 
+Reusable presets for demos and hub seeds live in `src/labeling/presets.ts` (`GEOMETRY_ANNOTATE_INTERACTION`, `MODEL_COMPARE_PAIRWISE_INTERACTION`).
+
 ## Custom task example
 
 Define a new review flow without adding a `LabelMode` or screen:
